@@ -1,0 +1,20 @@
+header {
+  margin: 5px;
+  padding: 5px;
+  height: 30px;
+  text-align: right;
+  border-radius: 10px;
+  background-color: #80FF80;
+}
+
+header p {
+  line-height: 30px;
+}
+
+footer {
+  margin: 5px;
+  padding: 5px;
+  font-size: small;
+  text-align: right;
+  border-top: 1px solid #eee;
+}

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>alt-checkbox demo</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+    <script src="jquery.alt-checkbox.js"></script>
+    <link rel="stylesheet" href="jquery.alt-checkbox.icon-font.css">
+    <link rel="stylesheet" href="jquery.alt-checkbox.css">
+</head>
+<body>
+    <h1>alt-checkbox demo</h1>
+
+    <input type="checkbox" id="checkbox1">
+    <label for="checkbox1">Check Me! I'm small.</label>
+
+    <input type="checkbox" id="checkbox2">
+    <label for="checkbox2" >Check Me! I'm medium.</label>
+
+    <input type="checkbox" id="checkbox3">
+    <label for="checkbox3">Check Me! I'm big.</label>
+
+
+    <div>
+        <a href="javascript:make()">make</a>
+        <a href="javascript:jQuery('[type=checkbox]').altCheckbox('clear')">clear</a>
+    </div>
+
+    <script>
+        var make = (function() {
+            jQuery("#checkbox1").altCheckbox({outlineUnchecked: false, sizeClass: "small"});
+            jQuery("#checkbox2").altCheckbox();
+            jQuery("#checkbox3").altCheckbox({sizeClass: "big"});
+        });
+        make();
+    </script>
+
+</body>
+</html>
