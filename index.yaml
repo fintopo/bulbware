@@ -10,27 +10,34 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
-- kind: TodoProject
-  properties:
-  - name: app
-  - name: owner
-  - name: name
-
-- kind: TodoProject
-  properties:
-  - name: app_name
-  - name: owner
-  - name: name
-
-- kind: TodoTask
+- kind: BulbwareElement
   properties:
   - name: app_name
   - name: project
-  - name: start_datetime
+  - name: sorttext
+    direction: desc
 
-- kind: TodoTask
+- kind: BulbwareItem
   properties:
   - name: app_name
   - name: project
-  - name: tags
-  - name: start_datetime
+  - name: name
+
+- kind: BulbwarePage
+  properties:
+  - name: app_name
+  - name: project
+  - name: name
+
+- kind: BulbwareProject
+  properties:
+  - name: app_name
+  - name: owner
+  - name: name
+
+- kind: BulbwareProject
+  properties:
+  - name: app_name
+  - name: owner
+  - name: sorttext
+

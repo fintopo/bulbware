@@ -1,0 +1,28 @@
+{%}profile_tagName{%}
+{%}profile_className{%}profile well
+{%}profile{%}
+<img src="/user/api/get_icon?key=$(.id)">
+$(.name)
+<button class="btn btn-default"><a href="/user/"><i class="fa fa-edit"></i> 編集</a></button>
+
+{%}edit_profile_tagName{%}
+{%}edit_profile_className{%}profile well
+{%}edit_profile_view{%}
+<img src="/user/api/get_icon?key=$(.id)">
+$(.name)
+<button class="btn btn-default jscbtn_to_edit"><i class="fa fa-edit"></i> 編集</button>
+
+{%}edit_profile_edit{%}
+<div class="form-group">
+	<label>名前</label>
+	<input type="text" class="form-control jscinput_name" value="$(.name)" />
+</div>
+<div class="form-group">
+	<label>Email</label>
+	<input type="text" class="form-control jscinput_email" value="$(.email)" />
+</div>
+<div class="form-group">
+	<button class="btn btn-primary jscbtn_save">保存</button>
+	<button class="btn btn-default jscbtn_to_view">キャンセル</button>
+	<button class="btn btn-danger jscbtn_delete">削除</button>
+</div>

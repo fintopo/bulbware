@@ -6,6 +6,8 @@ from google.appengine.api import users
 import datetime
 import calendar
 import pickle
+import json
+
 import logging
 
 import bulbware_lib
@@ -25,6 +27,11 @@ class UserInfo(ndb.Model):
             'email': self.email,
             'options': self.options
             }
+    def get_option_values(self):
+        if self.options:
+            return json.loads(self.options)
+        else:
+            return {}
     def check_edit(self):
         user = users.get_current_user()
         if user:
