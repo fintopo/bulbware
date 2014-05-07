@@ -1,20 +1,17 @@
 application: bulbware-fintopo
-version: 1-0-x
+version: 2-0-0
 runtime: python27
 api_version: 1
 threadsafe: yes
 
 handlers:
-- url: /favicon\.ico
-  static_files: favicon.ico
-  upload: favicon\.ico
 
 - url: /js
   static_dir: js
 #  expiration: "7d"
 
-- url: /todo/api/.*
-  script: todo_api.app
+- url: /api/.*
+  script: bulbware_api.app
   login: required
 
 - url: /user/.*

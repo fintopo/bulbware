@@ -1,31 +1,28 @@
-@import url("main.css");  
-
 #projects {
+}
+
+#project {
+  border-radius: 10px;
+  border: 1px solid #eee;  
+  padding: 10px;
 }
 
 #tasks {
 }
 
-.jsc_project {
-  margin: 5px;
-  padding: 5px;
-  border-radius: 10px;
-  border: 1px solid #eee;
-}
-
-.jsc_task {
+#tasks .task {
   margin: 5px;
   padding: 5px;
   border-radius: 10px;
   border: 1px solid #eee;  
 }
 
-.jsc_task.checked {
+#tasks .task.checked {
   background-color: #FEF4FF;
   border-style: none;
 }
 
-.jsc_task.unchecked {
+#tasks .task.unchecked {
   background-color: #ECFFEC;
   border-style: none;
 }
