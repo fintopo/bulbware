@@ -1,0 +1,39 @@
+{%}messageSuccess{%}
+<div class="alert alert-info alert-dismissible">
+	<button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+	<strong>Success!</strong>
+	$(.Message)
+</div>
+
+{%}messageWarning{%}
+<div class="alert alert-warning alert-dismissible">
+	<button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+	<strong>Warning!</strong>
+	$(.Message)
+</div>
+
+{%}messageError{%}
+<div class="alert alert-danger alert-dismissible">
+	<button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+	<strong>Error!</strong>
+	$(.Message)
+</div>
+
+{%}confirm{%}
+<div class="modal fade" id="modal-confirm" tabindex="-1" role="dialog" aria-labelledby="modal-confirm-label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title" id="modal-confirm-label">確認</h4>
+      </div>
+      <div class="modal-body">
+        $(_Messages)
+			</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary jsbtn_confirm_ok">OK</button>
+        <button type="button" class="btn btn-default jsbtn_confirm_cancel" data-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>

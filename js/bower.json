@@ -1,0 +1,26 @@
+{
+  "name": "bulbware",
+  "version": "3.0.0",
+  "homepage": "https://github.com/fintopo/bulbware",
+  "authors": [
+    "fintopo http://www.fintopo.jp/"
+  ],
+  "main": "dashboard.js",
+  "moduleType": [
+    "amd"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "marionette": "~2.2.2",
+    "underscore.string": "~2.4.0",
+    "moment": "~2.8.4",
+    "requirejs": "~2.1.15"
+  }
+}

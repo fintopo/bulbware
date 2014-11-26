@@ -17,11 +17,23 @@ define([
       if (!this.url_delete) {
         this.url_delete = this.url_base + this.app + this.api_delete;
       }
+      if (!this.url_upload) {
+        this.url_upload = this.url_base + this.app + this.api_upload;
+      }
       //
-      this.listenTo(this, 'sync', this.adjust);
+      this.listenTo(this, 'change', this.adjustChange);
+      this.listenTo(this, 'sync', this._adjust);
+      this._adjust();
+    }
+    ,_adjust: function() {
       this.adjust();
-    },
-    adjust: function() {
+      this.adjustChange();
+      this.trigger('adjust');
+    }
+    ,adjustChange: function() {
+      return this.attributes;
+    }
+    ,adjust: function() {
       var _this = this;
       // options
       var options = _this.get('options');
@@ -50,20 +62,16 @@ define([
         update_time: update_time || ''
       }, {silent: true});
       //
-      return _this;
+      return _this.attributes;
     },
     get_option: function(param) {
       var option_values = this.get('option_values');
-      var ret;
-      if (option_values) {
-        ret = option_values[param];
-      }
-      return ret;
+      return (option_values) ? option_values[param] : undefined;
     },
     set_options: function(params, options){
       this.set({
-        option_values: $.extend(this.get('option_values'), params)
-      }, _.extend({silent: true}, options));
+        option_values: $.extend(true, {}, this.get('option_values'), params)
+      }, _(options || {}).defaults({silent: true}));
     },
     get_update_params: function(){
       return {};
@@ -92,9 +100,9 @@ define([
         if (option_values) {
           update_params.options = JSON.stringify(option_values);
         }
-//console.info(update_params);
+console.info(update_params);
         SNBinder.post(model.url_update, update_params, true, function(msgs) {
-//console.info(msgs);
+console.info(msgs);
           if (msgs.object) {
             var success = options.success;
             if (typeof success == 'function') {
@@ -146,6 +154,10 @@ define([
     ,inTags: function(tag){
       return (_(this.toArrayTags()).indexOf(tag) >= 0);
     }
+    ,setTag: function(label, mode){
+      var method = (mode) ? 'addTag' : 'removeTag';
+      this[method](label);
+    }
     ,addTag: function(tag) {
       var tags = this.get('tags') || [];
       tags.push(tag);
@@ -166,6 +178,18 @@ define([
       this.set({
         tags: tags
       });
+    }
+    ,uploadFile: function(data, options){
+      var _this = this;
+      //
+      var formData = new FormData(data);
+      $.ajax(_this.url_upload, _.extend({
+        method: 'POST',
+        contentType: false,
+        processData: false,
+        data: formData,
+        dataType: 'json'
+      }, options));
     }
   });
   var Collection = Backbone.Collection.extend({
@@ -190,7 +214,7 @@ define([
       //
       _this.trigger(method);
       //
-      SNBinder.get(model.url_search, _this._search_params, true, function(ret) {
+      SNBinder.get(model.url_search, _this.search_params, true, function(ret) {
         ret = _this.adjust(ret);
         var success = options.success;
         if (typeof success == 'function') {
@@ -201,26 +225,62 @@ define([
     ,adjust: function(ret){
       return ret;
     }
+    ,setSearchParams: function(params){
+      this.search_params = _(this.conditionTypes).reduce(function(ret, func, name){
+        if (ret[name]) {
+          ret[name] = commonLib[func](ret[name]);
+        }
+        return ret;
+      }, _.extend({}, params, _.result(this, 'option_search_params')));
+    }
     ,search: function(params, options) {
-      this._search_params = _.extend({}, this.search_params, params);
+      this.trigger('search');
+      this.setSearchParams(params);
       this.fetch(_.extend({}, options, {reset: true}));
       //
       return this;
     }
-    ,getNewModel: function(mode_add, attributes, options){
-      attributes =_({}).extend(attributes, {
-        app: this.app
-      });
-      var model;
-      if (mode_add === 'create') {
-        model = this.create(attributes, options);
-      } else {
-        model = new this.model(attributes, options);
-        if (mode_add) {
-          this.add(model);
+    ,getModel: function(id, options){
+      // Backbone.Collection.crate の代わり。
+      // 新規登録時には、サーバーにオブジェクトを生成したくない。
+      // createメソッドは、saveしてしまい、サーバーにオブジェクトが生成されるため。
+      var _this = this;
+      //
+      options = _.extend({
+        modeAddCollection: false
+        ,callback: null
+        ,model_defaults: null
+        ,model_options: null
+      }, options);
+      //
+      var call = true;
+      var model = (id) ? _this.findWhere({id: id}) : null;
+      if (!model) {
+        model = new _this.model(_.extend({
+          Header: _.result(_this.modelHeader, 'attributes')
+        }, options.model_defaults), _.extend({
+          collection: _this
+        }, options.model_options));
+        if (id) {
+          model.id = id;
+          call = false;
+          if (_.isFunction(options.callback)) {
+            _this.listenToOnce(model, 'sync', function(){ // fetchのoptions.successではsyncイベント発生前のためadjustが実行されない。
+              _.defer(function(){
+                options.callback(model);
+              });
+            });
+          }
+          model.fetch();
+          options.modeAddCollection = true;
+        }
+        if (options.modeAddCollection){
+          _this.add(model); 
         }
       }
-      model.collection = this;
+      if (_.isFunction(options.callback) && call) {
+        options.callback(model);
+      }
       //
       return model;
     }
@@ -232,12 +292,15 @@ define([
     url_delete: '',
     defaults: {
       name: '',
+      email: '',
+      memo: '',
       options: {}
     },
     get_update_params: function(){
       return {
         name: this.get('name'),
         email: this.get('email'),
+        memo: this.get('memo'),
         option_values: this.get('option_values')
       };
     }
@@ -317,6 +380,7 @@ define([
     api_get: '/get_item',
     api_update: '/update_item',
     api_delete: '/delete_item',
+    api_upload: '/append_file_to_item',
     defaults: {
       name: ''
       ,options: {}
@@ -346,6 +410,43 @@ define([
     url_base: url_base,
     api_search: '/search_items',
     model: Item,
+    search_params: {}
+  });
+  // Attribute
+  var Attribute = Model.extend({
+    url_base: url_base,
+    api_get: '/get_attribute',
+    api_update: '/update_attribute',
+    api_delete: '/delete_attribute',
+    defaults: {
+      name: ''
+      ,options: {}
+      ,tags: []
+      ,sorttext: ''
+      ,project_id: ''
+      ,project_name: ''
+      ,owner_id: ''
+      ,owner_name: ''
+      ,create_datetime: ''
+      ,update_datetime: ''
+    },
+    get_update_params: function(){
+      var _this = this;
+      //
+      return {
+        id: (_this.id || '')
+        ,name: _this.get('name')
+        ,project_id: _this.get('project_id')
+        ,tags: _this.toArrayTags()
+        ,sorttext: _this.get('sorttext')
+      };
+    }
+  });
+  //
+  var Attributes = Collection.extend({
+    url_base: url_base,
+    api_search: '/search_attributes',
+    model: Attribute,
     search_params: {}
   });
   // Element
@@ -407,6 +508,7 @@ define([
        Projects: Projects
       ,Pages: Pages
       ,Items: Items
+      ,Attributes: Attributes
       ,Elements: Elements
     }
     ,Model: {
@@ -414,6 +516,7 @@ define([
       ,Project: Project
       ,Page: Page
       ,Item: Item
+      ,Attribute: Attribute
       ,Element: Element
     }
   };

@@ -1,25 +1,122 @@
-header {
-  padding: 5px;
-  width: 100%;
-  height: 30px;
-  text-align: right;
-  background-color: #80FF80;
-  position: fixed;
-	top: 0px;
+﻿body {
+	font-family: 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro','メイリオ','Meiryo','ＭＳ Ｐゴシック',sans-serif;
 }
 
-#body {
-  margin-top: 35px;
+input,
+textarea {
+  font-size: 16px!important;
+}
+
+/* loading */
+
+.loading {
+  animation: spin 2s infinite linear;
+	-moz-animation: spin 2s infinite linear;
+	-webkit-animation: spin 2s infinite linear;
+	-o-animation: spin 2s infinite linear;
+	-ms-animation: spin 2s infinite linear;
+}
+
+.js_loading {
+  text-align: center;
+  font-size: xx-large;
+  padding: 10px;
+}
+
+@-webkit-keyframes spin {
+	0% {-webkit-transform: rotate(0deg);}
+	100% {-webkit-transform: rotate(360deg);}
+}
+@-moz-keyframes spin {
+	0% {-moz-transform: rotate(0deg);}
+	100% {-moz-transform: rotate(360deg);}
+}
+@-ms-keyframes spin {
+	0% {-ms-transform: rotate(0deg);}
+	100% {-ms-transform: rotate(360deg);}
+}
+@-o-keyframes spin {
+	0% {-o-transform: rotate(0deg);}
+	100% {-o-transform: rotate(360deg);}
+}
+@keyframes spin {
+	0% {transform: rotate(0deg);}
+	100% {transform: rotate(360deg);}
+}
+
+/* header */
+
+header {
+  position: fixed;
+	top: 0px;
+  width: 100%;
+  height: 50px;
+  padding: 10px;
+  text-align: right;
+  z-index: 30;
 }
 
 header p {
-  line-height: 30px;
+  line-height: 50px;
 }
 
-footer {
-  margin: 5px;
-  padding: 5px;
-  font-size: small;
-  text-align: right;
-  border-top: 1px solid #eee;
+header .logo {
+  height: 30px;
+}
+
+/* main */
+
+#main {
+  padding-top: 60px;		
+}
+
+/* navigation */
+
+#navigation {
+  position: fixed;
+	top: 0px;
+	left: 0px;
+  z-index: 50;
+  width: 100%;
+  transition: all cubic-bezier(.19, 1, .22, 1);
+  transition-duration: .4s;
+	height: 0px;
+}
+
+#navigation .js_projects {
+  padding: 10px;
+}
+
+#navigation .navigation-header {
+  width: 50px;
+  height: 50px;
+  text-align: center;
+}
+
+#navigation .navigation-header p {
+  line-height: 50px;
+}
+
+#navigation .navigation-body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#navigation .navigation-footer {
+  height: 30px;
+}
+
+#navigation .navigation-item {
+  float: right;
+  margin: 0px 0px 0px 10px;
+  height: 100%;
+}
+
+#navigation .navigation-item.slidebar-close {
+  width: 30px;
+  height: 30px;
+  font-size: large;
+  line-height: 30px;
+  text-align: center;
 }

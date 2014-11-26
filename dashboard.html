@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>Bulbware - Application Framework</title>
+<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/base/jquery-ui.css">
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="/js/templates/main.css">
+<link rel="stylesheet" href="/js/templates/skin-fintopo.css">
+<link rel="stylesheet" href="/js/templates/{{app}}.css">
+<!-- RequireJS http://requirejs.org/ -->
+<script data-main="/js/dashboard.js" src="/js/bower_components/requirejs/require.js"></script>
+{% endblock %}
+
+{% block body %}
+<header class="clearfix">
+	<p class="pull-right"><a href="/">Bulbware - Application Framework</a></p>
+</header>
+<div id="navigation">
+	<div class="navigation-header slidebar-resize"><p>Menu</p></div>
+	<div class="navigation-body slidebar-body">
+		<div class="js_projects"></div>
+		<div class="navigation-footer clearfix">
+   		<div class="navigation-item slidebar-close"><i class="fa fa-arrow-up"></i></div>
+   		<div class="js_profile navigation-item"></div>
+		</div>
+	</div>
+</div>
+<div class="container">
+	<div id="main"></div>
+	<div id="main-footer"></div>
+</div>
+{% endblock %}

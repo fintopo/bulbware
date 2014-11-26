@@ -1,28 +1,51 @@
 {%}profile_tagName{%}
-{%}profile_className{%}profile well
+{%}profile_className{%}
+{%}profile_style{%}
+height: 100%;
+line-height: 100%;
+
+{%}profile_css{%}
+.icon {
+  height: 100%;
+}
+button {
+  -as-classes: btn btn-default btn-xs;
+}
+
 {%}profile{%}
-<img src="/user/api/get_icon?key=$(.id)">
-$(.name)
-<button class="btn btn-default"><a href="/user/"><i class="fa fa-edit"></i> 編集</a></button>
+<img src="/icon?key=$(.Profile.id)" class="icon js_user_icon"> $(.Profile.name)
+<button class="jsbtn_edit">設定</button>
+<button class="jsbtn_logout">Logout</button>
+
 
 {%}edit_profile_tagName{%}
-{%}edit_profile_className{%}profile well
-{%}edit_profile_view{%}
-<img src="/user/api/get_icon?key=$(.id)">
-$(.name)
-<button class="btn btn-default jscbtn_to_edit"><i class="fa fa-edit"></i> 編集</button>
-
-{%}edit_profile_edit{%}
-<div class="form-group">
-	<label>名前</label>
-	<input type="text" class="form-control jscinput_name" value="$(.name)" />
+{%}edit_profile_className{%}panel panel-default profile
+{%}edit_profile_style{%}
+{%}edit_profile_css{%}
+{%}edit_profile{%}
+<div class="panel-heading clearfix">
+	<button type="button" class="close pull-right jsbtn_close_panel"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
 </div>
-<div class="form-group">
-	<label>Email</label>
-	<input type="text" class="form-control jscinput_email" value="$(.email)" />
-</div>
-<div class="form-group">
-	<button class="btn btn-primary jscbtn_save">保存</button>
-	<button class="btn btn-default jscbtn_to_view">キャンセル</button>
-	<button class="btn btn-danger jscbtn_delete">削除</button>
+<div class="panel-body">
+	<form class="form-group clearfix js_file">
+		<img src="/icon?key=$(.Profile.id)" class="media-object pull-left js_user_icon">
+		<input type="file" name="file"> 
+		<br>
+		<input type="submit" class="btn btn-default jsbtn_upload_file" value="アイコンのアップロード">
+	</form>
+	<div class="form-group">
+		<label>名前</label>
+		<input type="text" class="form-control jsinput_name" value="$(.name)" />
+	</div>
+	<div class="form-group">
+		<label>Email</label>
+		<input type="text" class="form-control jsinput_email" value="$(.email)" />
+	</div>
+	<div class="form-group">
+		<label>プロフィール</label>
+		<textarea class="form-control jsinput_memo">$(_memo)</textarea>
+	</div>
+	<div class="form-group">
+		<button class="btn btn-primary jsbtn_save">保存</button>
+	</div>
 </div>

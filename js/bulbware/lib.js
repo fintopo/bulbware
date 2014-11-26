@@ -52,6 +52,57 @@ define([
     var len = 8; // パスワードの長さ
     return makePassword(c, len);
   };
+  //
+  var toHankaku = function (str) {
+    // 全角を半角に変換して返す
+    return str.replace(/[Ａ-Ｚａ-ｚ０-９－！”＃＄％＆’（）＝＜＞，．？＿［］｛｝＠＾～￥]/g, function(s) {
+      return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+    });
+  };
+  var toZenkakuKana = (function(){
+    // 半角カナを全角カナに変換して返す（濁点対応）
+    // 参考： http://www.openspc2.org/reibun/javascript/business/003/
+    var txt = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝｧｨｩｪｫｬｭｮｯ､｡ｰ｢｣ﾞﾟ";
+    var zen = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンァィゥェォャュョッ、。ー「」";
+    var zenlen = zen.length;
+    zen +=    "　　　　　ガギグゲゴザジズゼゾダヂヅデド　　　　　バビブベボ　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　";
+    if (zenlen * 2 != zen.length) {
+      throw 'toZenkakuKanaの定義に異常があります。';
+    }
+    zen +=    "　　　　　　　　　　　　　　　　　　　　　　　　　パピプペポ　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　";
+    //
+    return function (motoText) {
+      var str = "";
+      var i, len, c, n, cnext, nnext;
+      for (i=0, len=motoText.length; i<len; i++) {
+        c = motoText.charAt(i);
+		    n = txt.indexOf(c,0);
+		    if (n >= zenlen) {
+          // 濁点、半濁点
+          continue;
+		    } else if (n >= 0){
+		      cnext = motoText.charAt(i+1);
+		      nnext = txt.indexOf(cnext,0);
+			    if (nnext >= zenlen){ // 濁点、半濁点
+				    c = zen.charAt(n+zenlen*(nnext-zenlen+1));
+				    i++;
+			    }else{
+				    c = zen.charAt(n);
+			    }
+		    }
+			  str += c;
+      }
+      return str;
+    };
+  })();
+  var toString = function(value) {
+    // 入力値を文字列に整形する
+    var str = _(value).clean();
+    str = toHankaku(str);
+    str = str.toLowerCase();
+    str = toZenkakuKana(str);
+    return str;
+  };
   var toHankakuNum = function (motoText) {
     // motoTextの全角数字を半角数字に変換して返す
     if (typeof(motoText) != "string") {
@@ -68,6 +119,21 @@ define([
     }
     return str;
   };
+  var toNumber = function(value) {
+    // 入力値を数値に整形する
+    var ret = String(value);
+    ret = $.trim(ret);
+    ret = ret.replace(/[^\d\.]/g,"");
+    ret = toHankakuNum(ret);
+    ret = Number(ret) || 0;
+    return ret;
+  };
+  var toDate = function(value) {
+    var ret = $.trim(value);
+    ret = (ret) ? moment(toHankaku(ret)).format('YYYY-MM-DD') : '';
+    return ret;
+  };
+  //
   var getFileInfo = function(fileName) {
     // ファイル名を拡張子とそれ以外に分離する。
     var ret = { // 戻り値のタイプ
@@ -100,14 +166,74 @@ define([
     return get;
   };
   //
+  var mixin = function(obj, properties){
+    if (!obj) return;
+    _(properties).reduce(function(obj, methodBody, methodName){
+      var old = obj.prototype[methodName];
+      if (old) {
+        if (_.isFunction(methodBody)) {
+          obj.prototype[methodName] = function() {
+            var oldReturn = old.apply(this, arguments);
+            var newReturn = methodBody.apply(this, arguments);
+            return newReturn || oldReturn;
+          };
+        } else if (_.isObject(methodBody)) {
+          obj.prototype[methodName] = _.extend({}, _.result(obj.prototype, methodName), methodBody);
+        } else {
+          obj.prototype[methodName] = methodBody;
+        }
+      } else {
+        obj.prototype[methodName] = methodBody;
+      }
+      return obj;
+    }, obj);
+    //
+    return obj;
+  };
+  //
+  var checkMailAddress = function(email){
+    // サーバー側の条件と合わせること。
+//    if (email.match(/^(?:(?:(?:(?:[a-zA-Z0-9_!#\$\%&'*+/=?\^`{}~|\-]+)(?:\.(?:[a-zA-Z0-9_!#\$\%&'*+/=?\^`{}~|\-]+))*)|(?:"(?:\\[^\r\n]|[^\\"])*")))\@(?:(?:(?:(?:[a-zA-Z0-9_!#\$\%&'*+/=?\^`{}~|\-]+)(?:\.(?:[a-zA-Z0-9_!#\$\%&'*+/=?\^`{}~|\-]+))*)|(?:\[(?:\\\S|[\x21-\x5a\x5e-\x7e])*\])))$/)) {
+    if (email.match(/^[-+._\w]+@(?:(?:(?:(?:[a-zA-Z0-9_!#\$\%&'*+/=?\^`{}~|\-]+)(?:\.(?:[a-zA-Z0-9_!#\$\%&'*+/=?\^`{}~|\-]+))*)|(?:\[(?:\\\S|[\x21-\x5a\x5e-\x7e])*\])))$/)) {
+        return true;
+    } else {
+        return false;
+    }    
+  };
+  //
+  var getCookie = (function(){
+    var cookies = _(document.cookie).chain()
+        .words(';')
+        .reduce(function(ret, value){
+          var values = _(value).words('=');
+          ret[_.trim(values[0])] = _.trim(values[1]);
+          return ret;
+        }, {})
+        .value();
+    //
+    return function(name){
+      return cookies[name];
+    };
+  })();
+  //
+  var swap = function(a, b) {
+    var t = a;
+    a = b;
+    b = t;
+  };
+  //
   return {
-    lib: {
-      wait: wait
-      ,makeStandardPassword: makeStandardPassword
-      ,makePassword: makePassword
-      ,toHankakuNum: toHankakuNum
-      ,getFileInfo: getFileInfo
-      ,getRequest: getRequest
-    }
+    wait: wait
+    ,makeStandardPassword: makeStandardPassword
+    ,makePassword: makePassword
+    ,toString: toString
+    ,toNumber: toNumber
+    ,toDate: toDate
+    ,getFileInfo: getFileInfo
+    ,getRequest: getRequest
+    ,mixin: mixin
+    ,swap: swap
+    ,checkMailAddress: checkMailAddress
+    ,getCookie: getCookie
   };
 });

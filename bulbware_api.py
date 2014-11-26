@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import webapp2
+import json
 import logging
 
 import user_model
@@ -191,19 +192,55 @@ class deleteItem(webapp2.RequestHandler):
             if item.check_delete(userinfo):
                 item.key.delete();
 
+class appendFileToItem(webapp2.RequestHandler):
+    def post(self, app):
+        userinfo = user_model.get_login_userinfo()
+        key = self.request.get('item_id')
+        file = self.request.get('file') 
+        #
+        item = bulbware_model.get_item(app, key)
+        if item:
+            if item.check_edit(userinfo):
+                # ファイルをblobstoreに保存
+                pic = bulbware_lib.resize_image(file, 800, 800)
+                blob_key = bulbware_lib.set_blob(pic, 'image/jpeg')
+                # blob_keyをリンクに保存
+                data = json.loads(item.options)
+                if 'image' in data:
+                    blobstore.delete(data['image'])
+                data['image'] = str(blob_key)
+                item.options = json.dumps(data, ensure_ascii=False)
+                item.put()
+                #
+                ret = {
+                    'blob_key': str(blob_key)
+                    }
+                bulbware_lib.write_json(self, ret);
+
 class searchAttributes(webapp2.RequestHandler):
     def get(self, app):
         userinfo = user_model.get_login_userinfo()
         project_key = self.request.get('project')
-        project = bulbware_model.get_project(app, project_key);
+        tags = self.request.get_all('tags[]')
+        #
+        if project_key:
+            project = bulbware_model.get_project(app, project_key);
+            if project:
+                if project.check_edit(userinfo):
+                    attributes = bulbware_model.search_attributes_project(app, project, tags)
+        else:
+            attributes = bulbware_model.search_attributes_owner(app, userinfo, tags)
+        #
         ret = [];
-        if project:
-            tags = self.request.get_all('tags[]')
-            #
-            if project.check_edit(userinfo):
-                attributes = bulbware_model.search_attributes_project(app, project, tags)
-                for attribute in attributes:
-                    ret.append(attribute.get_property())
+        for attribute in attributes:
+            ret.append(attribute.get_property())
+        # プロジェクトがなく、create_nameが指定されている場合は生成する
+        create_name = self.request.get('create_name')
+        if (attributes.count() == 0) and create_name:
+            options = self.request.get('create_options')
+            attribute = bulbware_model.add_attribute(app, userinfo, create_name, options, [])
+            ret.append(attribute.get_property())
+        #
         bulbware_lib.write_json(self, ret);
 
 class getAttribute(webapp2.RequestHandler):
@@ -297,10 +334,7 @@ class updateElement(webapp2.RequestHandler):
             else:
                 self.error(403)
         else:
-            project = bulbware_model.get_project(app, project_key)
-            if project:
-                if project.check_edit(userinfo):
-                    element = bulbware_model.add_element(app, userinfo, options, tags, sorttext, element_datetime, project_key, page_key, item_key, attribute_key)
+            element = bulbware_model.add_element(app, userinfo, options, tags, sorttext, element_datetime, project_key, page_key, item_key, attribute_key)
         if element:
             ret = {
                 'object': element.get_property()
@@ -331,6 +365,7 @@ app = webapp2.WSGIApplication([
     ('/api/(.*)/get_item', getItem),
     ('/api/(.*)/update_item', updateItem),
     ('/api/(.*)/delete_item', deleteItem),
+    ('/api/(.*)/append_file_to_item', appendFileToItem),
     ('/api/(.*)/search_attributes', searchAttributes),
     ('/api/(.*)/get_attribute', getAttribute),
     ('/api/(.*)/update_attribute', updateAttribute),

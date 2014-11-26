@@ -40,11 +40,17 @@ class BulbwareProject(ndb.Model):
       return json.loads(self.options)
     else:
       return {}
+  def get_owner(self):
+    return self.owner.get()
+  def get_pages(self):
+    return search_pages_project(self.app_name, self)
+  def get_items(self):
+    return search_items_project(self.app_name, self)
   def check_edit(self, userinfo):
     return (self.owner.urlsafe() == userinfo.key.urlsafe())
   def check_delete(self, userinfo):
-    pages = search_pages_project(self.app_name, self)
-    items = search_items_project(self.app_name, self)
+    pages = self.get_pages()
+    items = self.get_items()
     return (pages.count() == 0) and (items.count() == 0) and (self.owner.urlsafe() == userinfo.key.urlsafe())
   def save(self, userinfo, name, options, tags, sorttext=None):
       self.name = name
@@ -55,6 +61,8 @@ class BulbwareProject(ndb.Model):
       else:
         self.sorttext = name
       self.put()
+  def inTag(self, tag):
+    return (tag in self.tags)
 
 
 def get_project(app_name, key_str):
@@ -69,14 +77,7 @@ def add_project(app_name, userinfo, name, options, tags, sorttext=None):
     project = BulbwareProject()
     project.app_name = app_name
     project.owner = userinfo.key
-    project.name = name
-    project.options = options
-    project.tags = tags
-    if sorttext:
-      project.sorttext = sorttext
-    else:
-      project.sorttext = name
-    project.put()
+    project.save(userinfo, name, options, tags, sorttext)
     return project
 
 def search_projects_owner(app_name, userinfo, tags=None):
@@ -92,6 +93,17 @@ def search_projects_owner(app_name, userinfo, tags=None):
 
 def search_projects_name(app_name, name, tags=None):
   q = BulbwareProject.query(BulbwareProject.app_name==app_name, BulbwareProject.name==name)
+  #
+  if tags:
+    while tags.count('') > 0:
+      tags.remove('')
+    if tags and (len(tags) > 0):
+      q = q.filter(BulbwareProject.tags.IN(tags))
+  #
+  return q.order(BulbwareProject.sorttext)
+
+def search_projects_tags(app_name, tags=None):
+  q = BulbwareProject.query(BulbwareProject.app_name==app_name)
   #
   if tags:
     while tags.count('') > 0:
@@ -125,6 +137,13 @@ class BulbwarePage(ndb.Model):
       'create_datetime': bulbware_lib.jst_date(self.create_datetime).strftime('%Y-%m-%d %H:%M:%S'),
       'update_datetime': bulbware_lib.jst_date(self.update_datetime).strftime('%Y-%m-%d %H:%M:%S')
       }
+  def get_option_values(self):
+    if self.options:
+      return json.loads(self.options)
+    else:
+      return {}
+  def get_owner(self):
+    return self.owner.get()
   def check_edit(self, userinfo):
     return (self.owner.urlsafe() == userinfo.key.urlsafe())
   def check_delete(self, userinfo):
@@ -153,16 +172,7 @@ def add_page(app_name, userinfo, name, options, tags, sorttext=None, project_key
     page = BulbwarePage()
     page.app_name = app_name
     page.owner = userinfo.key
-    page.name = name
-    page.options = options
-    page.tags = tags
-    if sorttext:
-      page.sorttext = sorttext
-    else:
-      page.sorttext = name
-    if project_key:
-      self.project = ndb.Key(urlsafe=project_key)
-    page.put()
+    page.save(name, options, tags, sorttext, project_key)
     return page
 
 def search_pages_project(app_name, project, tags=None):
@@ -200,6 +210,13 @@ class BulbwareItem(ndb.Model):
       'create_datetime': bulbware_lib.jst_date(self.create_datetime).strftime('%Y-%m-%d %H:%M:%S'),
       'update_datetime': bulbware_lib.jst_date(self.update_datetime).strftime('%Y-%m-%d %H:%M:%S')
       }
+  def get_option_values(self):
+    if self.options:
+      return json.loads(self.options)
+    else:
+      return {}
+  def get_owner(self):
+    return self.owner.get()
   def check_edit(self, userinfo):
     return (self.owner.urlsafe() == userinfo.key.urlsafe())
   def check_delete(self, userinfo):
@@ -228,16 +245,7 @@ def add_item(app_name, userinfo, name, options, tags, sorttext=None, project_key
     item = BulbwareItem()
     item.app_name = app_name
     item.owner = userinfo.key
-    item.name = name
-    item.options = options
-    item.tags = tags
-    if sorttext:
-      item.sorttext = sorttext
-    else:
-      item.sorttext = name
-    if project_key:
-      self.project = ndb.Key(urlsafe=project_key)
-    item.put()
+    item.save(name, options, tags, sorttext, project_key)
     return item
 
 def search_items_project(app_name, project, tags=None):
@@ -262,10 +270,10 @@ class BulbwareAttribute(ndb.Model):
   create_datetime = ndb.DateTimeProperty(auto_now_add=True)
   update_datetime = ndb.DateTimeProperty(auto_now=True)
   def get_property(self):
-    return {
+    ret = {
       'id': self.key.urlsafe(),
-      'project_id': self.project.urlsafe(),
-      'project_name': self.project.get().name,
+      'project_id': '',
+      'project': '',
       'owner_id': self.owner.urlsafe(),
       'owner_name': self.owner.get().name,
       'name': self.name,
@@ -275,6 +283,17 @@ class BulbwareAttribute(ndb.Model):
       'create_datetime': bulbware_lib.jst_date(self.create_datetime).strftime('%Y-%m-%d %H:%M:%S'),
       'update_datetime': bulbware_lib.jst_date(self.update_datetime).strftime('%Y-%m-%d %H:%M:%S')
       }
+    if self.project:
+      ret['project_id'] = self.project.key.urlsafe()
+      ret['project'] = self.project.get().get_property()
+    return ret
+  def get_option_values(self):
+    if self.options:
+      return json.loads(self.options)
+    else:
+      return {}
+  def get_owner(self):
+    return self.owner.get()
   def check_edit(self, userinfo):
     return (self.owner.urlsafe() == userinfo.key.urlsafe())
   def check_delete(self, userinfo):
@@ -287,8 +306,7 @@ class BulbwareAttribute(ndb.Model):
       self.sorttext = sorttext
     else:
       self.sorttext = name
-    if project_key:
-      self.project = ndb.Key(urlsafe=project_key)
+    self.project = bulbware_lib.get_key(project_key, BulbwareProject)
     self.put()
 
 def get_attribute(app_name, key_str):
@@ -303,17 +321,19 @@ def add_attribute(app_name, userinfo, name, options, tags, sorttext=None, projec
     attribute = BulbwareAttribute()
     attribute.app_name = app_name
     attribute.owner = userinfo.key
-    attribute.name = name
-    attribute.options = options
-    attribute.tags = tags
-    if sorttext:
-      attribute.sorttext = sorttext
-    else:
-      attribute.sorttext = name
-    if project_key:
-      attribute.project = ndb.Key(urlsafe=project_key)
-    attribute.put()
+    attribute.save(name, options, tags, sorttext, project_key)
     return attribute
+
+def search_attributes_owner(app_name, userinfo, tags=None):
+  q = BulbwareAttribute.query(BulbwareAttribute.app_name==app_name, BulbwareAttribute.owner==userinfo.key)
+  #
+  if tags:
+    while tags.count('') > 0:
+      tags.remove('')
+    if tags and (len(tags) > 0):
+      q = q.filter(BulbwareAttribute.tags.IN(tags))
+  #
+  return q.order(BulbwareAttribute.sorttext)
 
 def search_attributes_project(app_name, project, tags=None):
   q = BulbwareAttribute.query(BulbwareAttribute.app_name==app_name, BulbwareAttribute.project==project.key)
@@ -371,30 +391,32 @@ class BulbwareElement(ndb.Model):
       ret['attribute_id'] = self.attribute.urlsafe()
       ret['attribute'] = self.attribute.get().get_property()
     return ret
+  def get_option_values(self):
+    if self.options:
+      return json.loads(self.options)
+    else:
+      return {}
+  def get_owner(self):
+    return self.owner.get()
   def check_edit(self, userinfo):
     return (self.owner.urlsafe() == userinfo.key.urlsafe())
   def check_delete(self, userinfo):
     return (self.owner.urlsafe() == userinfo.key.urlsafe())
-  def save(self, options, tags, sorttext=None, element_datetime=None, project_key=None, page_key=None, item_key=None, attribute_key=None):
+  def save(self, options, tags, sorttext=None, element_datetime=None, project=None, page=None, item=None, attribute=None):
       self.options = options
       self.tags = tags
       if sorttext:
         self.sorttext = sorttext
       else:
         self.sorttext = element_datetime
-      logging.info(element_datetime)
       if element_datetime:
         self.element_datetime = bulbware_lib.utc_date(bulbware_lib.parse_datetime(element_datetime))
       else:
         self.element_datetime = None
-      if project_key:
-        self.project = ndb.Key(urlsafe=project_key)
-      if page_key:
-        self.page = ndb.Key(urlsafe=page_key)
-      if item_key:
-        self.item = ndb.Key(urlsafe=item_key)
-      if attribute_key:
-        self.attribute = ndb.Key(urlsafe=attribute_key)
+      self.project = bulbware_lib.get_key(project, BulbwareProject)
+      self.page = bulbware_lib.get_key(page, BulbwarePage)
+      self.item = bulbware_lib.get_key(item, BulbwareItem)
+      self.attribute = bulbware_lib.get_key(attribute, BulbwareAttribute)
       self.put()
 
 def get_element(app_name, key_str):
@@ -405,29 +427,11 @@ def get_element(app_name, key_str):
       if element.app_name == app_name:
         return element
 
-def add_element(app_name, userinfo, options, tags, sorttext=None, element_datetime=None, project_key=None, page_key=None, item_key=None, attribute_key=None):
+def add_element(app_name, userinfo, options, tags, sorttext=None, element_datetime=None, project=None, page=None, item=None, attribute=None):
     element = BulbwareElement()
     element.app_name = app_name
     element.owner = userinfo.key
-    element.options = options
-    element.tags = tags
-    if sorttext:
-      element.sorttext = sorttext
-    else:
-      element.sorttext = element_datetime
-    if element_datetime:
-      element.element_datetime = bulbware_lib.utc_date(bulbware_lib.parse_datetime(element_datetime))
-    else:
-      element.element_datetime = None
-    if project_key:
-      element.project = ndb.Key(urlsafe=project_key)
-    if page_key:
-      element.page = ndb.Key(urlsafe=page_key)
-    if item_key:
-      element.item = ndb.Key(urlsafe=item_key)
-    if attribute_key:
-      element.attribute = ndb.Key(urlsafe=attribute_key)
-    element.put()
+    element.save(options, tags, sorttext, element_datetime, project, page, item, attribute)
     return element
 
 def search_elements_project(app_name, project, tags=None):

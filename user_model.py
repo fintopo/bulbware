@@ -18,6 +18,7 @@ class UserInfo(ndb.Model):
     name = ndb.StringProperty()
     icon = ndb.BlobProperty()
     email = ndb.StringProperty()
+    memo = ndb.TextProperty()
     options = ndb.TextProperty()
     google_id = ndb.StringProperty()
     def get_property(self):
@@ -25,6 +26,7 @@ class UserInfo(ndb.Model):
             'id': self.key.urlsafe(),
             'name': self.name,
             'email': self.email,
+            'memo': self.memo,
             'options': self.options
             }
     def get_option_values(self):
@@ -38,9 +40,10 @@ class UserInfo(ndb.Model):
             if self.google_id == user.user_id():
                 return True
         return False
-    def save(self, name, email, options):
+    def save(self, name, email, memo, options):
         self.name = name
         self.email = email
+        self.memo = memo
         self.options = options
         self.put()
     def save_icon(self, icon):
@@ -60,7 +63,7 @@ def get_login_userinfo():
             email = user.email()
             p = email.find('@')
             name = email[:p] # メールアドレスの@の前
-            userinfo = add_userinfo(name, email, google_id)
+            userinfo = add_userinfo(name, email, '', '', google_id)
         return userinfo
 
 def get_userinfo(key_str):
@@ -70,10 +73,8 @@ def get_userinfo(key_str):
             userinfo = key.get()
             return userinfo
 
-def add_userinfo(name, email, google_id):
+def add_userinfo(name, email, memo, options, google_id):
     userinfo = UserInfo()
-    userinfo.name = name
-    userinfo.email = email
     userinfo.google_id = google_id
-    userinfo.put()
+    userinfo.save(name, email, memo, options)
     return userinfo

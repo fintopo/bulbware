@@ -1,11 +1,10 @@
-application: bulbware-fintopo
-version: 2-0-0
+application: bulbware
+version: 3-0-0
 runtime: python27
 api_version: 1
 threadsafe: yes
 
 handlers:
-
 - url: /js
   static_dir: js
 #  expiration: "7d"
@@ -22,7 +21,7 @@ handlers:
   script: dashboard.app
   login: required
 
-- url: /.*
+- url: .*
   script: main.app
 
 libraries:

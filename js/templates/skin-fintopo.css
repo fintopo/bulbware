@@ -1,0 +1,114 @@
+/* fintopo colors
+
+line: #ddd;
+
+main 緑
+normal: hsl(120, 100%, 90%);
+strong: hsl(120, 100%, 70%);
+
+類似1 青緑
+normal: hsl(160, 100%, 90%);
+strong: hsl(160, 100%, 70%);
+
+類似2 黄色
+normal: hsl(80, 100%, 90%);
+strong: hsl(80, 100%, 70%);
+
+対比1 紫
+normal: hsl(300, 100%, 90%);
+strong: hsl(300, 100%, 70%);
+
+対比2 赤
+normal: hsl(20, 100%, 90%);
+strong: hsl(20, 100%, 70%);
+
+対比3 青
+normal: hsl(220, 100%, 90%);
+strong: hsl(220, 100%, 70%);
+
+*/
+
+/* bootstrap */
+
+.alert-primary,
+.btn-primary,
+.label-primary,
+.bg-primary {
+  color: white;
+	background-color: hsl(220, 100%, 80%);
+	border-color: hsl(220, 100%, 70%);
+}
+
+.alert-success,
+.btn-success,
+.label-success,
+.bg-success {
+  color: hsl(160, 40%, 30%);
+	background-color: hsl(160, 100%, 90%);
+	border-color: hsl(160, 100%, 70%);
+}
+
+.alert-info,
+.btn-info,
+.label-info,
+.bg-info {
+  color: hsl(80, 40%, 30%);
+	background-color: hsl(80, 100%, 90%);
+	border-color: hsl(80, 100%, 70%);
+}
+
+.alert-warning,
+.btn-warning,
+.label-warning,
+.bg-warning {
+  color: hsl(300, 40%, 30%);
+	background-color: hsl(300, 100%, 90%);
+	border-color: hsl(300, 100%, 70%);
+}
+
+.alert-danger,
+.btn-danger,
+.label-danger,
+.bg-danger {
+  color: hsl(20, 40%, 30%);
+	background-color: hsl(20, 100%, 90%);
+	border-color: hsl(20, 100%, 70%);
+}
+
+/* header */
+
+header {
+  background-color: hsl(120, 100%, 90%);
+  opacity: 0.9;
+}
+
+/* panel */
+
+.panel-default > .panel-heading {
+  background-color: hsl(160, 100%, 90%);
+}
+
+/* navigation */
+
+#navigation .navigation-header {
+  background-color: hsl(120, 100%, 70%);
+}
+
+#navigation .navigation-body {
+  background-color: white;
+  border-bottom: 1px solid hsl(120, 100%, 70%);
+}
+
+#navigation .submenu_item.active {
+  border: 1px solid #ddd;
+	border-radius: 5px;
+}
+
+#navigation .submenu_item:hover {
+  background-color: hsl(80, 100%, 90%);
+}
+
+.slidebar-close {
+  background-color: #F0F0F0;
+	border-radius: 5px;
+}

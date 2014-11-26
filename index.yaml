@@ -10,34 +10,14 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
-- kind: BulbwareElement
-  properties:
-  - name: app_name
-  - name: project
-  - name: sorttext
-    direction: desc
-
 - kind: BulbwareItem
   properties:
   - name: app_name
   - name: project
-  - name: name
-
-- kind: BulbwarePage
-  properties:
-  - name: app_name
-  - name: project
-  - name: name
-
-- kind: BulbwareProject
-  properties:
-  - name: app_name
-  - name: owner
-  - name: name
+  - name: sorttext
 
 - kind: BulbwareProject
   properties:
   - name: app_name
   - name: owner
   - name: sorttext
-

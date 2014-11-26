@@ -13,6 +13,9 @@ import os
 from google.appengine.ext.webapp import template
 import logging
 
+from google.appengine.ext import blobstore
+from google.appengine.api import files
+
 def write_json(self, data):
     json_str = json.dumps(data, ensure_ascii=False) 
     self.response.content_type = 'application/json'
@@ -97,16 +100,73 @@ def resize_image(picture, width, height):
     if picture:
         try:
             img = images.Image(picture)
-            pic = picture
             if img.width > img.height:
                 if img.width > width:
                     h = width / img.width * img.height
-                    pic = images.resize(picture, width, h)
+                    img.resize(width, h)
             else:
                 if img.height > height:
                     w = height / img.width * img.height
-                    pic = images.resize(picture, w, height)
-            return db.Blob(pic)
+                    img.resize(w, height)
+            return img.execute_transforms(output_encoding=images.JPEG)
         except:
-            return None
+            logging.error('resize_image in bulbware_lib.py')
+            return picture
+
+
+def set_blob(value, mime_type):
+    blob_io = files.blobstore.create(mime_type=mime_type)
+    with files.open(blob_io, 'a') as f:
+        f.write(value)
+    files.finalize(blob_io)
+    return files.blobstore.get_blob_key(blob_io)
+        
+
+def get_blob(blob_key):
+    ret = ''
+    try:
+        p0 = 0
+        p1 = blobstore.MAX_BLOB_FETCH_SIZE - 1
+        s = '0'
+        while len(s) > 0:
+            s = blobstore.fetch_data(blob_key, p0, p1)
+            ret += s
+            p0 = p1 + 1
+            p1 = p0 + blobstore.MAX_BLOB_FETCH_SIZE - 1
+    except:
+        pass
+    return ret 
+
+def get_key(value, type_class):
+    if not value:
+        value = None
+    elif isinstance(value, type_class):
+        value = value.key
+    elif isinstance(value, basestring):
+        value = ndb.Key(urlsafe=value)
+    return value
+
+def get_number(value):
+    if isinstance(value, basestring):
+        if value:
+            value = float(value)
+        else:
+            value = 0
+    return value
+
+def get_integer(value):
+    if isinstance(value, basestring):
+        if value:
+            value = int(value)
+        else:
+            value = 0
+    return value
+
+def get_datetime(value):
+    if isinstance(value, basestring):
+        if value:
+            value = utc_date(parse_datetime(value))
+        else:
+            value = None
+    return value
 
