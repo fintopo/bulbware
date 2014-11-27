@@ -3,7 +3,7 @@ define([
   ,'bulbware/obj'
   ,'standard/lib'
   //
-  ,'lib/apply_styles/jquery.apply_styles'
+  ,'bower_components/applyStyles/jquery.apply_styles'
 ], function(bulbwareLib, bulbwareObj, standardLib){
   //
   var mixinTemplate = function(view, templates, section, options){

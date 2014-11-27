@@ -37,9 +37,10 @@
     ,'backbone': 'bower_components/backbone/backbone'
     ,'backbone.marionette': 'bower_components/marionette/lib/backbone.marionette.min'
     ,'moment': 'bower_components/moment/min/moment-with-locales.min'
-	  ,'json2': 'lib/json2/json2'
-    ,'snbinder': 'lib/snbinder/snbinder' // https://github.com/snakajima/SNBinder
+  	,'json2': 'bower_components/JSON-js/json2'
+    ,'snbinder': 'bower_components/SNBinder/snbinder-0.5.3'
     ,'text': 'lib/requirejs/text'
+    ,'loadcss': 'lib/requirejs/loadcss'
     ,'async': 'lib/requirejs/async'
   }
   ,urlArgs: 'bust=3-0-0-2014-11-23'
