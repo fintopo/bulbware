@@ -74,21 +74,21 @@ def jst_date(value=None):
     value = value.replace(tzinfo=UtcTzinfo()).astimezone(JstTzinfo()) 
     return value.replace(tzinfo=None)
 
-def utc_date(value): 
+def utc_date(value=None): 
     if value: 
       value = value.replace(tzinfo=JstTzinfo()).astimezone(UtcTzinfo()) 
     else:
       value = datetime.datetime.now() 
     return value.replace(tzinfo=None)
 
-def parse_datetime(date):
+def parse_datetime(date=None):
     if date:
         t = datetime.datetime.strptime(date.replace('-', '/'), "%Y/%m/%d %H:%M:%S")
     else:
         t = datetime.datetime.now()
     return datetime.datetime(t.year, t.month, t.day, t.hour, t.minute, t.second)
 
-def parse_date(date):
+def parse_date(date=None):
     if date:
         t = datetime.datetime.strptime(date.replace('-', '/'), "%Y/%m/%d")
     else:

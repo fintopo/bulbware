@@ -152,7 +152,7 @@ console.info(msgs);
       return tags;
     }
     ,inTags: function(tag){
-      return (_(this.toArrayTags()).indexOf(tag) >= 0);
+      return _(this.toArrayTags()).contains(tag);
     }
     ,setTag: function(label, mode){
       var method = (mode) ? 'addTag' : 'removeTag';
@@ -251,6 +251,8 @@ console.info(msgs);
         ,callback: null
         ,model_defaults: null
         ,model_options: null
+        ,modeInsertCollection: false // modelInsertで指定したモデルの後に追加する
+        ,modelInsert: null
       }, options);
       //
       var call = true;
@@ -275,7 +277,14 @@ console.info(msgs);
           options.modeAddCollection = true;
         }
         if (options.modeAddCollection){
+          model.flagAdd = true;
           _this.add(model); 
+        }
+        if (options.modeInsertCollection){
+          model.flagAdd = true;
+          var index = _this.indexOf(options.modelInsert); 
+          _this.models.splice(index+1, 0, model);
+          _this.trigger('add', model, _this);
         }
       }
       if (_.isFunction(options.callback) && call) {
@@ -477,7 +486,7 @@ console.info(msgs);
       var _this = this;
       //
       var element_datetime = moment(_this.get('element_datetime'));
-      if (element_datetime) {
+      if (element_datetime.isValid()) {
         element_datetime = element_datetime.format('YYYY/MM/DD HH:mm:ss');
       } else {
         element_datetime = '';

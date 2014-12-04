@@ -6,6 +6,12 @@ define([
   ,'bower_components/applyStyles/jquery.apply_styles'
 ], function(bulbwareLib, bulbwareObj, standardLib){
   //
+  var bindTemplate = function(template, attributes){
+    return SNBinder.bind(template, _.extend({
+      id_s: (_.result(attributes, 'id') || '新規登録')
+    }, attributes, bulbwareObj.templateParams));
+  };
+  //
   var mixinTemplate = function(view, templates, section, options){
     // テンプレート展開を追加する
     options = _.extend({
@@ -16,9 +22,7 @@ define([
       try {
         var mode_section = _.result(attributes, 'mode_section');
         var template = templates[section+(mode_section || '')] || templates[section];
-        return SNBinder.bind(template, _.extend({
-          id_s: (_.result(attributes, 'id') || '新規登録')
-        }, attributes, bulbwareObj.templateParams, options.additionalTemplateParams));
+        return bindTemplate(template, _.extend({}, attributes, options.additionalTemplateParams));
       } catch (e) {
         console.log(e, section, mode_section, templates, attributes);
       }
@@ -164,11 +168,11 @@ define([
         var flagNew = _this.model.isNew();
         _this.listenToOnce(_this.model, 'sync', function(){
           _.defer(function(){
-            if (flagNew && _this.model.collection) {
+            if (flagNew && _this.model.collection && !_this.model.flagAdd) {
               _this.model.collection.add(_this.model);
             }
             //
-            _this.triggerMethod('after:save');
+            _this.triggerMethod('after:save', flagNew);
             //
             if (_.isFunction(callback)) {
               callback();
@@ -595,7 +599,7 @@ define([
         var _this = this;
         //
         if (id || !_this.disabledAddNewView) {
-          _this.collection.getModel(id, {
+          return _this.collection.getModel(id, {
             modeAddCollection: true
             ,model_defaults: attributes
             ,callback: function(model){
@@ -989,6 +993,7 @@ define([
       ,uploadFile: mixinUploadFile
     }
     ,createViewList: createViewList
+    ,bindTemplate: bindTemplate
     ,panelController: panelController
   };
 });

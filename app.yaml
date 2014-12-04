@@ -9,6 +9,10 @@ handlers:
   static_dir: js
 #  expiration: "7d"
 
+- url: /public
+  static_dir: public
+#  expiration: "7d"
+
 - url: /api/.*
   script: bulbware_api.app
   login: required

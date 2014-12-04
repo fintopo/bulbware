@@ -294,7 +294,7 @@ define([
       this.closePanel();
     }
   });
-  bulbwareView.mixin.panel(panelProject);
+  bulbwareView.mixin.edit(panelProject);
   bulbwareView.mixin.template(panelProject, templates, 'project');
   //
   return {
