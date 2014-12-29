@@ -43,7 +43,7 @@
     ,'loadcss': 'lib/requirejs/loadcss'
     ,'async': 'lib/requirejs/async'
   }
-  ,urlArgs: 'bust=3-0-0-2014-11-23'
+  ,urlArgs: 'bust=3-1-0-2014-12-30'
 });
         
 require([
@@ -95,6 +95,7 @@ require([
             fragment += '/'+(_.result(view.model, 'id')||'null');
           }
           Backbone.history.navigate(fragment);
+          view.scrollTop(true, {offset: 60});
         }
       });
     });
