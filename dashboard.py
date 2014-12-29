@@ -5,6 +5,8 @@ import webapp2
 import os
 from google.appengine.ext.webapp import template
 
+import user_model
+
 class Dashboard(webapp2.RequestHandler):
   def get(self):
     user_model.get_login_userinfo() # userinfoが無い場合に生成するため
