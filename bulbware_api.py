@@ -352,6 +352,31 @@ class deleteElement(webapp2.RequestHandler):
             if element.check_delete(userinfo):
                 element.key.delete();
 
+class deleteElements(webapp2.RequestHandler):
+    def post(self, app):
+        userinfo = self.request.get('owner')
+        project = self.request.get('project')
+        page = self.request.get('page')
+        item = self.request.get('item')
+        attribute = self.request.get('attribute')
+        tags = self.request.get_all('tags[]')
+        datetime1 = self.request.get('datetime1')
+        datetime2 = self.request.get('datetime2')
+        #
+        taskqueue.add(url='/tasks/'+app+'/delete_elements', params={
+                'userinfo': userinfo,
+                'project': project,
+                'page': page,
+                'item': item,
+                'attribute': attribute,
+                'tags': tags,
+                'datetime1': datetime1,
+                'datetime2': datetime2
+                })
+        #
+        ret = {}
+        bulbware_lib.write_json(self, ret);
+
 app = webapp2.WSGIApplication([
     ('/api/(.*)/search_projects', searchProjects),
     ('/api/(.*)/get_project', getProject),
@@ -373,5 +398,6 @@ app = webapp2.WSGIApplication([
     ('/api/(.*)/search_elements', searchElements),
     ('/api/(.*)/get_element', getElement),
     ('/api/(.*)/update_element', updateElement),
-    ('/api/(.*)/delete_element', deleteElement)
+    ('/api/(.*)/delete_element', deleteElement),
+    ('/api/(.*)/delete_elements', deleteElements)
 ], debug=True)

@@ -434,6 +434,40 @@ def add_element(app_name, userinfo, options, tags, sorttext=None, element_dateti
     element.save(options, tags, sorttext, element_datetime, project, page, item, attribute)
     return element
 
+def search_elements(app_name, userinfo=None, project=None, page=None, item=None, attribute=None, tags=None, datetime1=None, datetime2=None, order=None):
+  q = BulbwareElement.query(BulbwareElement.app_name==app_name)
+  #
+  if userinfo:
+    q = q.filter(BulbwareElement.owner==bulbware_lib.get_key(userinfo, user_model.UserInfo))
+  #
+  if project:
+    q = q.filter(BulbwareElement.project==bulbware_lib.get_key(project, BulbwareProject))
+  #
+  if page:
+    q = q.filter(BulbwareElement.page==bulbware_lib.get_key(page, BulbwarePage))
+  #
+  if item:
+    q = q.filter(BulbwareElement.item==bulbware_lib.get_key(item, BulbwareItem))
+  #
+  if attribute:
+    q = q.filter(BulbwareElement.attribute==bulbware_lib.get_key(attribute, BulbwareAttribute))
+  #
+  if tags:
+    while tags.count('') > 0:
+      tags.remove('')
+    if tags and (len(tags) > 0):
+      q = q.filter(BulbwareElement.tags.IN(tags))
+  #
+  if datetime1:
+    q = q.filter(BulbwareElement.element_datetime>=bulbware_lib.get_datetime(datetime1))
+  if datetime2:
+    q = q.filter(BulbwareElement.element_datetime<=bulbware_lib.get_datetime(datetime2))
+  #
+  if order=='sorttext':
+    return q.order(-BulbwareElement.sorttext)
+  else:
+    return q
+
 def search_elements_project(app_name, project, tags=None):
   q = BulbwareElement.query(BulbwareElement.app_name==app_name, BulbwareElement.project==project.key)
   #
@@ -477,3 +511,7 @@ def search_elements_attribute(app_name, attribute, tags=None):
       q = q.filter(BulbwareElement.tags.IN(tags))
   #
   return q.order(-BulbwareElement.sorttext)
+
+def delete_elements(app_name, userinfo=None, project=None, page=None, item=None, attribute=None, tags=None, datetime1=None, datetime2=None):
+  q = search_elements(app_name, userinfo, project, page, item, attribute, tags, datetime1, datetime2)
+  ndb.delete_multi(q.fetch(keys_only=True))

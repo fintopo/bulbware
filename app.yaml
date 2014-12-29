@@ -17,6 +17,10 @@ handlers:
   script: bulbware_api.app
   login: required
 
+- url: /tasks/.*
+  script: bulbware_tasks.app
+  login: admin
+
 - url: /user/.*
   script: user_api.app
   login: required

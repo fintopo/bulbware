@@ -346,6 +346,12 @@ console.info(msgs);
         ,sorttext: this.get('sorttext')
       };
     }
+    ,deleteElements: function(params, callback){
+      params = _.extend({
+        project: this.id
+      }, params);
+      SNBinder.post(this.url_base + this.app + '/delete_elements', params, true, callback);
+    }
   });
   //
   var Projects = Collection.extend({
@@ -382,6 +388,12 @@ console.info(msgs);
         ,tags: _this.toArrayTags()
         ,sorttext: _this.get('sorttext')
       };
+    }
+    ,deleteElements: function(params, callback){
+      params = _.extend({
+        page: this.id
+      }, params);
+      SNBinder.post(this.url_base + this.app + '/delete_elements', params, true, callback);
     }
   });
   //
@@ -421,6 +433,12 @@ console.info(msgs);
         ,sorttext: _this.get('sorttext')
       };
     }
+    ,deleteElements: function(params, callback){
+      params = _.extend({
+        item: this.id
+      }, params);
+      SNBinder.post(this.url_base + this.app + '/delete_elements', params, true, callback);
+    }
   });
   //
   var Items = Collection.extend({
@@ -457,6 +475,12 @@ console.info(msgs);
         ,tags: _this.toArrayTags()
         ,sorttext: _this.get('sorttext')
       };
+    }
+    ,deleteElements: function(params, callback){
+      params = _.extend({
+        attribute: this.id
+      }, params);
+      SNBinder.post(this.url_base + this.app + '/delete_elements', params, true, callback);
     }
   });
   //
