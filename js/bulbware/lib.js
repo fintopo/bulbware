@@ -222,6 +222,13 @@ define([
     b = t;
   };
   //
+  var getToDeep = function(obj, key){
+    var keys = key.split('.');
+    return _(keys).reduce(function(ret, key){
+      return _.result(ret, key);
+    }, obj);
+  };
+  //
   return {
     wait: wait
     ,makeStandardPassword: makeStandardPassword
@@ -235,5 +242,6 @@ define([
     ,swap: swap
     ,checkMailAddress: checkMailAddress
     ,getCookie: getCookie
+    ,getToDeep: getToDeep
   };
 });

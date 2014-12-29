@@ -1,5 +1,6 @@
 define([
-], function(){
+  'bulbware/lib'
+], function(bulbwareLib){
   var url_base = '/api/';
   //
   var Model = Backbone.Model.extend({
@@ -63,8 +64,15 @@ define([
       }, {silent: true});
       //
       return _this.attributes;
-    },
-    get_option: function(param) {
+    }
+    ,get: function(attr) {
+      var ret = _.result(this.attributes, 'attr');
+      if (!ret) {
+        ret = bulbwareLib.getToDeep(this.attributes, attr);
+      }
+      return ret;
+    }
+    ,get_option: function(param) {
       var option_values = this.get('option_values');
       return (option_values) ? option_values[param] : undefined;
     },
