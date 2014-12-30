@@ -186,20 +186,35 @@ define([
       ,deleteModel: function(callback){
         var _this = this;
         //
-        var breakDelete = _this.triggerMethod('delete');
-        if (breakDelete) {
-          return;
-        }
-        //
-        _this.model.destroy({
-          success: function(){
-            _this.triggerMethod('after:delete');
-            //
-            if (_.isFunction(callback)) {
-              callback();
-            }
+        var values = {
+          breakDelete: false
+          ,wait: false
+        };
+        var destroyModel = function(){
+          if (values.breakDelete) {
+            return;
           }
-        });
+          _this.model.destroy({
+            success: function(){
+              _this.triggerMethod('after:delete');
+              //
+              if (_.isFunction(callback)) {
+                callback();
+              }
+            }
+          });
+        };
+        //
+        _this.triggerMethod('delete', values);
+        if (values.wait) {
+          commonLib.wait(function(){
+            return !values.wait;
+          }, function(){
+            destroyModel();
+          });
+        } else {
+          destroyModel();
+        }
       }      
       ,events: {
         'click .jsbtn_save': 'clickSave'
@@ -234,12 +249,27 @@ define([
         var _this = this;
         if (!_.result(this.model, 'checkEdit')) return;
         //
-        var breakDelete = false;
-        _this.triggerMethod('delete', breakDelete);
-        if (breakDelete) {
-          return;
+        var values = {
+          breakDelete: false
+          ,wait: false
+        };
+        var destroyModel = function(){
+          if (values.breakDelete) {
+            return;
+          }
+          _this.model.removeCollection();
+        };
+        //
+        _this.triggerMethod('delete', values);
+        if (values.wait) {
+          commonLib.wait(function(){
+            return !values.wait;
+          }, function(){
+            destroyModel();
+          });
+        } else {
+          destroyModel();
         }
-        _this.model.removeCollection();
       }
     });
   };
