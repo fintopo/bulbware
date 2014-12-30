@@ -140,6 +140,13 @@ console.log(id);
       App.listenToOnce(App.View.Navigation, 'ready', function(){
         App.startRouter();
       });
+      // パネル コントロール ボタン
+      $('.jsbtn_prev_panel').click(function(){
+        App.View.panelController.prev(); 
+      });
+      $('.jsbtn_next_panel').click(function(){
+        App.View.panelController.next();          
+      });
     });
     App.start();
   });
