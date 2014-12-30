@@ -78,7 +78,10 @@ require([
           var _this = this;
           //
           view.listenTo(view, 'closePanel', function(values){
-            _this.close(values.view);
+            var panel = _this.close(values.view);
+            if (!panel) {
+              Backbone.history.navigate('');
+            }
           });
           view.listenTo(view, 'showPanel', function(values){
             _this.show(values.view);
