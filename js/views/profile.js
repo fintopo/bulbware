@@ -21,20 +21,13 @@
       this.logout();
     }
     ,onEditProfile: function(){
-      var _this = this;
-      //
-      var view = new editProfile({
-        model: _this.model
-      });
-      _this.triggerMethod('showPanel', {
-        view: view
-      });
+      Backbone.history.navigate('profile', {trigger: true});
     }
   });
   bulbwareView.mixin.view(viewProfile);
   bulbwareView.mixin.template(viewProfile, templates, 'profile');
   // Profile編集用
-  var editProfile = Marionette.ItemView.extend({
+  var panelProfile = Marionette.ItemView.extend({
     objName: 'profile'
     ,model: bulbwareObj.Profile
     ,ui: {
@@ -60,20 +53,11 @@
         _this.$('.jsbtn_save').html('保存');
       }, 1000);
     }
-    ,events: {
-      'click .jsbtn_upload_file': 'uploadIcon'
-    }
     ,uploadIcon: function(){
       var _this = this;
       //
       var form = _this.$('.js_file').get()[0];
-      var formData = new FormData(form);
-      $.ajax('/user/api/append_icon', {
-        method: 'POST',
-        contentType: false,
-        processData: false,
-        data: formData,
-        dataType: 'json',
+      _this.model.uploadFile(form, {
         error: function() {
           console.log('error');
         },
@@ -81,18 +65,22 @@
           $('.js_user_icon').attr('src', '/icon?key='+_this.model.id+'&t='+moment().valueOf());
         }
       });
-      
-      // false を返してデフォルトの動作をキャンセル
-      return false;      
+    }
+    ,triggers: {
+      'click .jsbtn_upload_file': 'uploadIcon'
+    }
+    ,onUploadIcon: function(){
+      this.uploadIcon();
+      return false; // false を返してデフォルトの動作をキャンセル      
     }
   });
-  bulbwareView.mixin.edit(editProfile);
-  bulbwareView.mixin.template(editProfile, templates, 'edit_profile');
+  bulbwareView.mixin.edit(panelProfile);
+  bulbwareView.mixin.template(panelProfile, templates, 'edit_profile');
   //
   return {
     View: {
       Profile: viewProfile
-      ,editProfile: editProfile
+      ,panelProfile: panelProfile
     }
   };
 });  

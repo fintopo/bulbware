@@ -14,14 +14,8 @@
       var _this = this;
       //
       _this.view_profile = new viewsProfile.View.Profile();
-      _this.listenTo(_this.view_profile, 'showPanel', function(values){
-        _this.triggerMethod('showPanel', values);
-      });
       //
       _this.view_projects = new viewsTodo.View.Projects();
-      _this.listenTo(_this.view_projects, 'showPanel', function(values){
-        _this.triggerMethod('showPanel', values);
-      });
       _this.listenTo(_this.view_projects, 'add', function(){
         _this.resize();
       });
@@ -66,17 +60,6 @@
     }
     ,closeMenu: function(){
       this.$el.slidebar('close');
-    }
-    ,selectProject: function(id){
-      var _this = this;
-      //
-      var model = (id) ? viewsTodo.Projects.getModel(id) : viewsTodo.Projects.first();
-      _this.view_projects.selectItem(model);
-    }
-    ,editProfile: function(id){
-      var _this = this;
-      //
-      _this.view_profile.triggerMethod('editProfile');
     }
   });
   bulbwareView.mixin.view(viewNavigation);

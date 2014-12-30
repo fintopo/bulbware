@@ -2,9 +2,11 @@ define([
   'bulbware/lib'
   ,'bulbware/obj'
   ,'standard/lib'
+  ,'text!standard/template/panel.html'
   //
   ,'bower_components/applyStyles/jquery.apply_styles'
-], function(bulbwareLib, bulbwareObj, standardLib){
+], function(bulbwareLib, bulbwareObj, standardLib, panel_templates){
+  panel_templates = SNBinder.get_named_sections_text(panel_templates);
   //
   var bindTemplate = function(template, attributes){
     return SNBinder.bind(template, _.extend({
@@ -88,77 +90,8 @@ define([
     });
   };
   //
-  var mixinPanel = function(view){
-    // パネルにする
-    mixinView(view);
-    bulbwareLib.mixin(view, {
-/*      onBeforeRender: function(){
-        var _this = this;
-        //
-        if (_this.model) {
-          var values = bulbwareObj.getProgram(_this.objName);
-          _this.model.set({
-            objName: values
-          }, {silent: true});
-        }
-      }
-*/
-      isCurrent: function(){
-        return this.$el.hasClass('current');
-      }
-      ,setCurrent: function(){
-        var _this = this;
-        //
-        _this.$el.parent().children().removeClass('current');
-        _this.$el.addClass('current');
-        _this.triggerMethod('setCurrent', this);
-      }
-      ,unsetCurrent: function(){
-        var _this = this;
-        //
-        _this.$el.removeClass('current');
-        _this.triggerMethod('unsetCurrent', this);
-      }
-      ,triggers: {
-        'click .jsbtn_close_panel': 'closePanel'
-        ,'click .jsbtn_open_window': 'openWindow'
-        ,'click .jsbtn_permalink': 'click:permalink'
-      }
-      ,closePanel: function(){
-        var _this = this;
-        //
-        _this.triggerMethod('closePanel', {
-          view: _this
-          ,model: _this.model
-        });
-      }
-      ,onClosePanel: function(){
-        var _this = this;
-        //
-        _.defer(function(){
-          _this.destroy();
-        });
-      }
-      ,events: {
-        'click .jsbtn_current': 'clickCurrent'
-        ,'click .jsbtn_call_order': 'clickCallOrder'
-      }
-      ,clickCurrent: function(){
-        this.setCurrent();
-      }
-      ,clickCallOrder: function(e){
-        var _this = this;
-        //
-        var obj = $(e.currentTarget).data('obj');
-        var id = $(e.currentTarget).data('id');
-        this.triggerMethod('callOrder', obj, id);
-      }
-    });
-  };
-  //
   var mixinEdit = function(view){
     // 編集用にする
-    mixinPanel(view);
     bulbwareLib.mixin(view, {
       save: function(callback){
         var _this = this;
@@ -865,6 +798,66 @@ define([
     };
   };
   // パネル管理
+  var viewPanel = Marionette.LayoutView.extend({
+    regions: {
+      'body': '.js_body'
+    }
+    ,onRender: function(){
+      var _this = this;
+      //
+      _this.body.show(_this.options.view);
+    }
+    ,isCurrent: function(){
+      return this.$el.hasClass('current');
+    }
+    ,setCurrent: function(){
+      var _this = this;
+      //
+      _this.$el.parent().children().removeClass('current');
+      _this.$el.addClass('current');
+    }
+    ,unsetCurrent: function(){
+      var _this = this;
+      //
+      _this.$el.removeClass('current');
+      _this.triggerMethod('unsetCurrent', this);
+    }
+    ,triggers: {
+      'click .jsbtn_close_panel': 'closePanel'
+      ,'click .jsbtn_open_window': 'openWindow'
+      ,'click .jsbtn_permalink': 'click:permalink'
+      ,'click .jsbtn_set_current': 'setCurrent'
+      ,'click .jsbtn_current': 'clickCurrent'
+      ,'click .jsbtn_call_order': 'clickCallOrder'
+    }
+    ,closePanel: function(){
+      var _this = this;
+      //
+      _this.triggerMethod('closePanel', {
+        view: _this
+        ,model: _this.model
+      });
+    }
+    ,onClosePanel: function(){
+      var _this = this;
+      //
+      _.defer(function(){
+        _this.destroy();
+      });
+    }
+    ,onClickCurrent: function(){
+      this.setCurrent();
+    }
+    ,onClickCallOrder: function(e){
+      var _this = this;
+      //
+      var obj = $(e.currentTarget).data('obj');
+      var id = $(e.currentTarget).data('id');
+      this.triggerMethod('callOrder', obj, id);
+    }
+  });
+  mixinView(viewPanel);
+  //
   var panelController = function(options){
     options = _.extend({
       selector: '#main'
@@ -887,24 +880,30 @@ define([
         if (!id) return;
         return _(panels).findWhere({name: name, id: id});
       }
-      ,show: function(view){
+      ,show: function(view, template){
         var model_id = _.result(view.model, 'id');
         if (!view.model || !model_id) {
           console.log(view.objName, model_id);
         }
         //
-        options.onBeforeShow.call(this, view);
+        template || (template = 'standard');
+        var baseView = viewPanel.extend();
+        mixinTemplate(baseView, panel_templates, template);
+        var view_panel = new baseView({
+          view: view
+        });
+        options.onBeforeShow.call(this, view_panel);
         //
-        $(options.selector).append(view.$el);
-        view._isShown = true;
-        view.render();
-        this.setCurrent(view);
+        $(options.selector).append(view_panel.$el);
+        view_panel._isShown = true;
+        view_panel.render();
+        this.setCurrent(view_panel);
         //
         var index = searchIndex(view);
         panels.push({
           name: view.objName
           ,id: model_id || null
-          ,view: view
+          ,view: view_panel
         });
         if (index >= 0) { // 同じパネルがある場合は古いものを消す。
           panels[index].view.destroy();
@@ -915,7 +914,7 @@ define([
           panel.view.destroy();
         }
         //
-        options.onAfterShow.call(this, view);
+        options.onAfterShow.call(this, view_panel);
       }
       ,close: function(view){
         var index = searchIndex(view);
@@ -1009,7 +1008,6 @@ define([
     mixin: {
       template: mixinTemplate // テンプレート展開を追加する function(view, templates, section, options)
       ,view: mixinView
-      ,panel: mixinPanel
       ,edit: mixinEdit // 編集用にする function(view)
       ,detailEdit: mixinDetailEdit // 明細編集用にする function(view)
       ,toggleEdit: mixinToggleEdit // 開閉型編集にする function(view)

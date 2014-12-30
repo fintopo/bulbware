@@ -68,14 +68,6 @@ require([
     //
     App.module('View', function(View, App) {
       View.Navigation = new viewsNavigation.View.Navigation();
-      App.listenTo(View.Navigation, 'showPanel', function(values){
-        var view = values.view;
-        App.View.panelController.show(view);
-        //
-        App.listenTo(view, 'setCurrent', function(){
-          View.panelController.setCurrent(view);
-        });
-      });
       //
       View.panelController = bulbwareView.panelController({
         selector: '#main'
@@ -88,8 +80,9 @@ require([
               Backbone.history.navigate('');
             }
           });
-          view.listenTo(view, 'showPanel', function(values){
-            _this.show(values.view);
+          //
+          view.listenTo(view, 'setCurrent', function(){
+            _this.setCurrent(this);
           });
         }
         ,onAfterShow: function(view){
@@ -110,18 +103,30 @@ require([
     App.module('Router', function(Router, App) {
       Router.Router = Marionette.AppRouter.extend({
         appRoutes: {
-          '': 'project'
-          ,'profile': 'profile'
+          'profile': 'profile'
           ,'project/:id': 'project'
         }
       });
       Router.Controller = Marionette.Controller.extend({
-        profile: function() {
-          App.View.Navigation.editProfile();
+        _getID: function(id){
+          return (id == 'null') ? null : id;
+        }
+        ,profile: function() {
+          require(['views/profile'], function(views){
+            var view = new views.View.panelProfile({});
+            App.View.panelController.show(view);
+          });
         }
         ,project: function(id) {
+          var _this = this;
 console.log(id);
-          App.View.Navigation.selectProject(id);
+          require(['views/todo'], function(views){
+            var model = views.Projects.getModel(_this._getID(id));
+            var view = new views.View.panelProject({
+              model: model
+            });
+            App.View.panelController.show(view);
+          });
         }
       });
       App.startRouter = _.after(1, function(){

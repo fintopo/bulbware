@@ -307,6 +307,7 @@ console.info(msgs);
     url_get: '/user/api/get_profile',
     url_update: '/user/api/update_profile',
     url_delete: '',
+    url_upload: '/user/api/append_icon',
     defaults: {
       name: '',
       email: '',
