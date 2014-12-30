@@ -65,9 +65,38 @@ class deleteProject(webapp2.RequestHandler):
         if project:
             userinfo = user_model.get_login_userinfo()
             if project.check_delete(userinfo):
+                data = json.loads(project.options)
+                if 'image' in data:
+                    blobstore.delete(data['image'])
+                #
                 project.key.delete();
                 return
         self.error(403)
+
+class appendFileToProject(webapp2.RequestHandler):
+    def post(self, app):
+        userinfo = user_model.get_login_userinfo()
+        key = self.request.get('project_id')
+        file = self.request.get('file') 
+        #
+        project = bulbware_model.get_project(app, key)
+        if project:
+            if project.check_edit(userinfo):
+                # ファイルをblobstoreに保存
+                pic = bulbware_lib.resize_image(file, 800, 800)
+                blob_key = bulbware_lib.set_blob(pic, 'image/jpeg')
+                # blob_keyをリンクに保存
+                data = json.loads(project.options)
+                if 'image' in data:
+                    blobstore.delete(data['image'])
+                data['image'] = str(blob_key)
+                project.options = json.dumps(data, ensure_ascii=False)
+                project.put()
+                #
+                ret = {
+                    'blob_key': str(blob_key)
+                    }
+                bulbware_lib.write_json(self, ret);
 
 class searchPages(webapp2.RequestHandler):
     def get(self, app):
@@ -129,9 +158,38 @@ class deletePage(webapp2.RequestHandler):
         if page:
             userinfo = user_model.get_login_userinfo()
             if page.check_delete(userinfo):
+                data = json.loads(page.options)
+                if 'image' in data:
+                    blobstore.delete(data['image'])
+                #
                 page.key.delete();
                 return
         self.error(403)
+
+class appendFileToPage(webapp2.RequestHandler):
+    def post(self, app):
+        userinfo = user_model.get_login_userinfo()
+        key = self.request.get('page_id')
+        file = self.request.get('file') 
+        #
+        page = bulbware_model.get_page(app, key)
+        if page:
+            if page.check_edit(userinfo):
+                # ファイルをblobstoreに保存
+                pic = bulbware_lib.resize_image(file, 800, 800)
+                blob_key = bulbware_lib.set_blob(pic, 'image/jpeg')
+                # blob_keyをリンクに保存
+                data = json.loads(page.options)
+                if 'image' in data:
+                    blobstore.delete(data['image'])
+                data['image'] = str(blob_key)
+                page.options = json.dumps(data, ensure_ascii=False)
+                page.put()
+                #
+                ret = {
+                    'blob_key': str(blob_key)
+                    }
+                bulbware_lib.write_json(self, ret);
 
 class searchItems(webapp2.RequestHandler):
     def get(self, app):
@@ -193,7 +251,13 @@ class deleteItem(webapp2.RequestHandler):
         if item:
             userinfo = user_model.get_login_userinfo()
             if item.check_delete(userinfo):
+                data = json.loads(item.options)
+                if 'image' in data:
+                    blobstore.delete(data['image'])
+                #
                 item.key.delete();
+                return
+        self.error(403)
 
 class appendFileToItem(webapp2.RequestHandler):
     def post(self, app):
@@ -291,7 +355,38 @@ class deleteAttribute(webapp2.RequestHandler):
         if attribute:
             userinfo = user_model.get_login_userinfo()
             if attribute.check_delete(userinfo):
+                data = json.loads(attribute.options)
+                if 'image' in data:
+                    blobstore.delete(data['image'])
+                #
                 attribute.key.delete();
+                return
+        self.error(403)
+
+class appendFileToAttribute(webapp2.RequestHandler):
+    def post(self, app):
+        userinfo = user_model.get_login_userinfo()
+        key = self.request.get('attribute_id')
+        file = self.request.get('file') 
+        #
+        attribute = bulbware_model.get_attribute(app, key)
+        if attribute:
+            if attribute.check_edit(userinfo):
+                # ファイルをblobstoreに保存
+                pic = bulbware_lib.resize_image(file, 800, 800)
+                blob_key = bulbware_lib.set_blob(pic, 'image/jpeg')
+                # blob_keyをリンクに保存
+                data = json.loads(attribute.options)
+                if 'image' in data:
+                    blobstore.delete(data['image'])
+                data['image'] = str(blob_key)
+                attribute.options = json.dumps(data, ensure_ascii=False)
+                attribute.put()
+                #
+                ret = {
+                    'blob_key': str(blob_key)
+                    }
+                bulbware_lib.write_json(self, ret);
 
 class searchElements(webapp2.RequestHandler):
     def get(self, app):
@@ -353,7 +448,13 @@ class deleteElement(webapp2.RequestHandler):
         if element:
             userinfo = user_model.get_login_userinfo()
             if element.check_delete(userinfo):
+                data = json.loads(element.options)
+                if 'image' in data:
+                    blobstore.delete(data['image'])
+                #
                 element.key.delete();
+                return
+        self.error(403)
 
 class deleteElements(webapp2.RequestHandler):
     def post(self, app):
@@ -380,15 +481,42 @@ class deleteElements(webapp2.RequestHandler):
         ret = {}
         bulbware_lib.write_json(self, ret);
 
+class appendFileToElement(webapp2.RequestHandler):
+    def post(self, app):
+        userinfo = user_model.get_login_userinfo()
+        key = self.request.get('element_id')
+        file = self.request.get('file') 
+        #
+        element = bulbware_model.get_element(app, key)
+        if element:
+            if element.check_edit(userinfo):
+                # ファイルをblobstoreに保存
+                pic = bulbware_lib.resize_image(file, 800, 800)
+                blob_key = bulbware_lib.set_blob(pic, 'image/jpeg')
+                # blob_keyをリンクに保存
+                data = json.loads(element.options)
+                if 'image' in data:
+                    blobstore.delete(data['image'])
+                data['image'] = str(blob_key)
+                element.options = json.dumps(data, ensure_ascii=False)
+                element.put()
+                #
+                ret = {
+                    'blob_key': str(blob_key)
+                    }
+                bulbware_lib.write_json(self, ret);
+
 app = webapp2.WSGIApplication([
     ('/api/(.*)/search_projects', searchProjects),
     ('/api/(.*)/get_project', getProject),
     ('/api/(.*)/update_project', updateProject),
     ('/api/(.*)/delete_project', deleteProject),
+    ('/api/(.*)/append_file_to_project', appendFileToProject),
     ('/api/(.*)/search_pages', searchPages),
     ('/api/(.*)/get_page', getPage),
     ('/api/(.*)/update_page', updatePage),
     ('/api/(.*)/delete_page', deletePage),
+    ('/api/(.*)/append_file_to_page', appendFileToPage),
     ('/api/(.*)/search_items', searchItems),
     ('/api/(.*)/get_item', getItem),
     ('/api/(.*)/update_item', updateItem),
@@ -398,9 +526,11 @@ app = webapp2.WSGIApplication([
     ('/api/(.*)/get_attribute', getAttribute),
     ('/api/(.*)/update_attribute', updateAttribute),
     ('/api/(.*)/delete_attribute', deleteAttribute),
+    ('/api/(.*)/append_file_to_attribute', appendFileToAttribute),
     ('/api/(.*)/search_elements', searchElements),
     ('/api/(.*)/get_element', getElement),
     ('/api/(.*)/update_element', updateElement),
     ('/api/(.*)/delete_element', deleteElement),
-    ('/api/(.*)/delete_elements', deleteElements)
+    ('/api/(.*)/delete_elements', deleteElements),
+    ('/api/(.*)/append_file_to_element', appendFileToElement)
 ], debug=True)
