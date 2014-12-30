@@ -293,6 +293,9 @@ define([
     ,onAfterDelete: function(){
       this.closePanel();
     }
+    ,triggers: {
+      'click .jsbtn_set_current': 'setCurrent'
+    }
   });
   bulbwareView.mixin.edit(panelProject);
   bulbwareView.mixin.template(panelProject, templates, 'project');

@@ -48,3 +48,71 @@
   line-height: 30px;
   text-align: center;
 }
+
+/* panel */
+
+#main .panel {
+	box-shadow: 1px 1px 5px 0px #E0E0E0;
+}
+
+#main .panel.current {
+	box-shadow: 2px 2px 20px 0px #E0E0E0;
+}
+
+.panel-control {
+  position: fixed; 
+	right: 0px;
+  background-color: #F0F0F0;
+  z-index: 20;
+  opacity: 0.9;
+}
+
+.panel .panel-navigation {
+  position: fixed;
+	right: 0px;
+  width: 20px;
+  height: 20px;
+  margin: 10px;
+	border-radius: 50%;
+	background-color: none;
+	border: 2px solid black;
+  opacity: 0.9;
+}
+
+.panel.current .panel-navigation {
+	background-color: black;
+}
+
+.panel:nth-last-child(1) .panel-navigation {
+  bottom: 150px;
+}
+.panel:nth-last-child(2) .panel-navigation {
+  bottom: 190px;
+}
+.panel:nth-last-child(3) .panel-navigation {
+  bottom: 230px;
+}
+.panel:nth-last-child(4) .panel-navigation {
+  bottom: 270px;
+}
+.panel:nth-last-child(5) .panel-navigation {
+  bottom: 310px;
+}
+.panel:nth-last-child(6) .panel-navigation {
+  bottom: 350px;
+}
+.panel:nth-last-child(7) .panel-navigation {
+  bottom: 390px;
+}
+.panel:nth-last-child(8) .panel-navigation {
+  bottom: 430px;
+}
+.panel:nth-last-child(9) .panel-navigation {
+  bottom: 470px;
+}
+.panel:nth-last-child(10) .panel-navigation {
+  bottom: 510px;
+}
+.panel:nth-last-child(n+11) .panel-navigation {
+  display: none;		
+}

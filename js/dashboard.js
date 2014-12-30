@@ -69,7 +69,12 @@ require([
     App.module('View', function(View, App) {
       View.Navigation = new viewsNavigation.View.Navigation();
       App.listenTo(View.Navigation, 'showPanel', function(values){
-        App.View.panelController.show(values.view);
+        var view = values.view;
+        App.View.panelController.show(view);
+        //
+        App.listenTo(view, 'setCurrent', function(){
+          View.panelController.setCurrent(view);
+        });
       });
       //
       View.panelController = bulbwareView.panelController({
