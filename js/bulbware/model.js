@@ -47,12 +47,12 @@ define([
       }
       //
       var create_datetime = moment(_this.get('create_datetime'));
-      if (create_datetime) {
+      if (create_datetime.isValid()) {
         var create_date = create_datetime.format('YYYY-MM-DD');
         var create_time = create_datetime.format('HH:mm:ss');
       }
       var update_datetime = moment(_this.get('update_datetime'));
-      if (update_datetime) {
+      if (update_datetime.isValid()) {
         var update_date = update_datetime.format('YYYY-MM-DD');
         var update_time = update_datetime.format('HH:mm:ss');
       }
