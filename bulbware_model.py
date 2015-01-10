@@ -124,10 +124,9 @@ class BulbwarePage(ndb.Model):
   create_datetime = ndb.DateTimeProperty(auto_now_add=True)
   update_datetime = ndb.DateTimeProperty(auto_now=True)
   def get_property(self):
-    return {
+    ret = {
       'id': self.key.urlsafe(),
-      'project_id': self.project.urlsafe(),
-      'project_name': self.project.get().name,
+      'project': '',
       'owner_id': self.owner.urlsafe(),
       'owner_name': self.owner.get().name,
       'name': self.name,
@@ -137,6 +136,9 @@ class BulbwarePage(ndb.Model):
       'create_datetime': bulbware_lib.jst_date(self.create_datetime).strftime('%Y-%m-%d %H:%M:%S'),
       'update_datetime': bulbware_lib.jst_date(self.update_datetime).strftime('%Y-%m-%d %H:%M:%S')
       }
+    if self.project:
+      ret['project'] = self.project.get().get_property()
+    return ret
   def get_option_values(self):
     if self.options:
       return json.loads(self.options)
@@ -174,6 +176,26 @@ def add_page(app_name, userinfo, name, options, tags, sorttext=None, project_key
     page.owner = userinfo.key
     page.save(name, options, tags, sorttext, project_key)
     return page
+
+def search_pages(app_name, userinfo=None, project=None, tags=None, order=True):
+  q = BulbwarePage.query(BulbwarePage.app_name==app_name)
+  #
+  if userinfo:
+    q = q.filter(BulbwarePage.owner==bulbware_lib.get_key(userinfo, user_model.UserInfo))
+  #
+  if project:
+    q = q.filter(BulbwarePage.project==bulbware_lib.get_key(project, BulbwareProject))
+  #
+  if tags:
+    while tags.count('') > 0:
+      tags.remove('')
+    if tags and (len(tags) > 0):
+      q = q.filter(BulbwarePage.tags.IN(tags))
+  #
+  if order:
+    return q.order(BulbwarePage.sorttext)
+  else:
+    return q
 
 def search_pages_project(app_name, project, tags=None):
   q = BulbwarePage.query(BulbwarePage.app_name==app_name, BulbwarePage.project==project.key)
@@ -434,7 +456,7 @@ def add_element(app_name, userinfo, options, tags, sorttext=None, element_dateti
     element.save(options, tags, sorttext, element_datetime, project, page, item, attribute)
     return element
 
-def search_elements(app_name, userinfo=None, project=None, page=None, item=None, attribute=None, tags=None, datetime1=None, datetime2=None, order=None):
+def search_elements(app_name, userinfo=None, project=None, page=None, item=None, attribute=None, tags=None, datetime1=None, datetime2=None, order=True):
   q = BulbwareElement.query(BulbwareElement.app_name==app_name)
   #
   if userinfo:
@@ -463,8 +485,8 @@ def search_elements(app_name, userinfo=None, project=None, page=None, item=None,
   if datetime2:
     q = q.filter(BulbwareElement.element_datetime<=bulbware_lib.get_datetime(datetime2))
   #
-  if order=='sorttext':
-    return q.order(-BulbwareElement.sorttext)
+  if order:
+    return q.order(BulbwareElement.sorttext)
   else:
     return q
 
