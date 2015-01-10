@@ -147,10 +147,7 @@ class updatePage(webapp2.RequestHandler):
             else:
                 self.error(403)
         else:
-            project = bulbware_model.get_project(app, project_key)
-            if project:
-                if project.check_edit(userinfo):
-                    page = bulbware_model.add_page(app, userinfo, name, options, tags, sorttext, project_key)
+            page = bulbware_model.add_page(app, userinfo, name, options, tags, sorttext, project_key)
         if page:
             ret = {
                 'object': page.get_property()
@@ -244,10 +241,7 @@ class updateItem(webapp2.RequestHandler):
             else:
                 self.error(403)
         else:
-            project = bulbware_model.get_project(app, project_key)
-            if project:
-                if project.check_edit(userinfo):
-                    item = bulbware_model.add_item(app, userinfo, name, options, tags, sorttext, project_key)
+            item = bulbware_model.add_item(app, userinfo, name, options, tags, sorttext, project_key)
         if item:
             ret = {
                 'object': item.get_property()
@@ -352,10 +346,7 @@ class updateAttribute(webapp2.RequestHandler):
             else:
                 self.error(403)
         else:
-            project = bulbware_model.get_project(app, project_key)
-            if project:
-                if project.check_edit(userinfo):
-                    attribute = bulbware_model.add_attribute(app, userinfo, name, options, tags, sorttext, project_key)
+            attribute = bulbware_model.add_attribute(app, userinfo, name, options, tags, sorttext, project_key)
         if attribute:
             ret = {
                 'object': attribute.get_property()
