@@ -114,7 +114,7 @@ class searchPages(webapp2.RequestHandler):
         ret = [];
         for page in pages:
             ret.append(page.get_property())
-        # プロジェクトがなく、create_nameが指定されている場合は、プロジェクトを生成する
+        # Pageがなく、create_nameが指定されている場合は、Pageを生成する
         if (pages.count() == 0) and create_name:
             page = bulbware_model.add_page(app, userinfo, create_name, create_options, [], create_name, project)
             ret.append(page.get_property())
@@ -203,16 +203,18 @@ class appendFileToPage(webapp2.RequestHandler):
 class searchItems(webapp2.RequestHandler):
     def get(self, app):
         userinfo = user_model.get_login_userinfo()
-        project_key = self.request.get('project')
-        project = bulbware_model.get_project(app, project_key);
+        project = self.request.get('project')
+        tags = self.request.get_all('tags[]')
+        #
+        items = bulbware_model.search_items(app, userinfo, project, tags)
         ret = [];
-        if project:
-            tags = self.request.get_all('tags[]')
-            #
-            if project.check_edit(userinfo):
-                items = bulbware_model.search_items_project(app, project, tags)
-                for item in items:
-                    ret.append(item.get_property())
+        for item in items:
+            ret.append(item.get_property())
+        # Itemがなく、create_nameが指定されている場合は、Itemを生成する
+        if (items.count() == 0) and create_name:
+            item = bulbware_model.add_item(app, userinfo, create_name, create_options, [], create_name, project)
+            ret.append(item.get_property())
+        #
         bulbware_lib.write_json(self, ret);
 
 class getItem(webapp2.RequestHandler):

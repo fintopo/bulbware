@@ -219,10 +219,9 @@ class BulbwareItem(ndb.Model):
   create_datetime = ndb.DateTimeProperty(auto_now_add=True)
   update_datetime = ndb.DateTimeProperty(auto_now=True)
   def get_property(self):
-    return {
+    ret = {
       'id': self.key.urlsafe(),
-      'project_id': self.project.urlsafe(),
-      'project_name': self.project.get().name,
+      'project': '',
       'owner_id': self.owner.urlsafe(),
       'owner_name': self.owner.get().name,
       'name': self.name,
@@ -232,6 +231,9 @@ class BulbwareItem(ndb.Model):
       'create_datetime': bulbware_lib.jst_date(self.create_datetime).strftime('%Y-%m-%d %H:%M:%S'),
       'update_datetime': bulbware_lib.jst_date(self.update_datetime).strftime('%Y-%m-%d %H:%M:%S')
       }
+    if self.project:
+      ret['project'] = self.project.get().get_property()
+    return ret
   def get_option_values(self):
     if self.options:
       return json.loads(self.options)
@@ -270,6 +272,26 @@ def add_item(app_name, userinfo, name, options, tags, sorttext=None, project_key
     item.save(name, options, tags, sorttext, project_key)
     return item
 
+def search_items(app_name, userinfo=None, project=None, tags=None, order=True):
+  q = BulbwareItem.query(BulbwareItem.app_name==app_name)
+  #
+  if userinfo:
+    q = q.filter(BulbwareItem.owner==bulbware_lib.get_key(userinfo, user_model.UserInfo))
+  #
+  if project:
+    q = q.filter(BulbwareItem.project==bulbware_lib.get_key(project, BulbwareProject))
+  #
+  if tags:
+    while tags.count('') > 0:
+      tags.remove('')
+    if tags and (len(tags) > 0):
+      q = q.filter(BulbwareItem.tags.IN(tags))
+  #
+  if order:
+    return q.order(BulbwareItem.sorttext)
+  else:
+    return q
+
 def search_items_project(app_name, project, tags=None):
   q = BulbwareItem.query(BulbwareItem.app_name==app_name, BulbwareItem.project==project.key)
   #
@@ -294,7 +316,6 @@ class BulbwareAttribute(ndb.Model):
   def get_property(self):
     ret = {
       'id': self.key.urlsafe(),
-      'project_id': '',
       'project': '',
       'owner_id': self.owner.urlsafe(),
       'owner_name': self.owner.get().name,
@@ -306,7 +327,6 @@ class BulbwareAttribute(ndb.Model):
       'update_datetime': bulbware_lib.jst_date(self.update_datetime).strftime('%Y-%m-%d %H:%M:%S')
       }
     if self.project:
-      ret['project_id'] = self.project.key.urlsafe()
       ret['project'] = self.project.get().get_property()
     return ret
   def get_option_values(self):
@@ -385,13 +405,9 @@ class BulbwareElement(ndb.Model):
   def get_property(self):
     ret = {
       'id': self.key.urlsafe(),
-      'project_id': '',
       'project': '',
-      'page_id': '',
       'page': '',
-      'item_id': '',
       'item': '',
-      'attribute_id': '',
       'attribute': '',
       'options': self.options,
       'tags': self.tags,
@@ -401,16 +417,12 @@ class BulbwareElement(ndb.Model):
       'update_datetime': bulbware_lib.jst_date(self.update_datetime).strftime('%Y-%m-%d %H:%M:%S')
       }
     if self.project:
-      ret['project_id'] = self.project.urlsafe()
       ret['project'] = self.project.get().get_property()
     if self.page:
-      ret['page_id'] = self.page.urlsafe()
       ret['page'] = self.page.get().get_property()
     if self.item:
-      ret['item_id'] = self.item.urlsafe()
       ret['item'] = self.item.get().get_property()
     if self.attribute:
-      ret['attribute_id'] = self.attribute.urlsafe()
       ret['attribute'] = self.attribute.get().get_property()
     return ret
   def get_option_values(self):
