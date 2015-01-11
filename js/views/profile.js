@@ -28,7 +28,9 @@
   bulbwareView.mixin.template(viewProfile, templates, 'profile');
   // Profile編集用
   var panelProfile = Marionette.ItemView.extend({
-    objName: 'profile'
+    getFragment: function(){
+      return 'profile';
+    }
     ,model: bulbwareObj.Profile
     ,ui: {
       name: '.jsinput_name'

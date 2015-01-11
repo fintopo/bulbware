@@ -103,7 +103,9 @@ define([
   bulbwareView.mixin.template(viewDetails, templates, 'details');
   //
   var panelProject = Marionette.LayoutView.extend({  
-    objName: 'project'
+    getFragment: function(){
+      return 'project/'+this.model.id;
+    }
     ,initialize: function(options) {
       var _this = this;
       //

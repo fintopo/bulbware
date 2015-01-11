@@ -89,13 +89,7 @@ require([
           App.View.Navigation.closeMenu();
         }
         ,onSetCurrent: function(view){
-          var fragment = view.objName;
-          if (_([
-            'project'
-          ]).contains(fragment)) {
-            fragment += '/'+(_.result(view.model, 'id')||'null');
-          }
-          Backbone.history.navigate(fragment);
+          Backbone.history.navigate(view.getFragment());
           view.scrollTop(true, {offset: 60});
         }
       });
@@ -114,7 +108,7 @@ require([
         ,profile: function() {
           require(['views/profile'], function(views){
             var view = new views.View.panelProfile({});
-            App.View.panelController.show(view);
+            App.View.panelController.show(view, 'standard');
           });
         }
         ,project: function(id) {
@@ -125,7 +119,7 @@ console.log(id);
             var view = new views.View.panelProject({
               model: model
             });
-            App.View.panelController.show(view);
+            App.View.panelController.show(view, 'standard');
           });
         }
       });

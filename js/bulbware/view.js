@@ -855,6 +855,9 @@ define([
       var id = $(e.currentTarget).data('id');
       this.triggerMethod('callOrder', obj, id);
     }
+    ,getFragment: function(){
+      return this.options.view.getFragment();
+    }
   });
   mixinView(viewPanel);
   //
@@ -886,9 +889,8 @@ define([
           console.log(view.objName, model_id);
         }
         //
-        template || (template = 'standard');
         var baseView = viewPanel.extend();
-        mixinTemplate(baseView, panel_templates, template);
+        mixinTemplate(baseView, panel_templates, template || 'standard');
         var view_panel = new baseView({
           view: view
         });
