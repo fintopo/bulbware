@@ -868,6 +868,7 @@ define([
       ,onBeforeShow: function(view){}
       ,onAfterShow: function(view){}
       ,onSetCurrent: function(view){}
+      ,mixinTypes: {}
     }, options);
     var panels = [];
     //
@@ -884,13 +885,10 @@ define([
         return _(panels).findWhere({name: name, id: id});
       }
       ,show: function(view, template){
-        var model_id = _.result(view.model, 'id');
-        if (!view.model || !model_id) {
-          console.log(view.objName, model_id);
-        }
-        //
+        template || (template = 'standard');
         var baseView = viewPanel.extend();
-        mixinTemplate(baseView, panel_templates, template || 'standard');
+        mixinTemplate(baseView, panel_templates, template);
+        bulbwareLib.mixin(baseView, _.result(options.mixinTypes, template));
         var view_panel = new baseView({
           view: view
         });
@@ -903,8 +901,7 @@ define([
         //
         var index = searchIndex(view);
         panels.push({
-          name: view.objName
-          ,id: model_id || null
+          name: view.getFragment()
           ,view: view_panel
         });
         if (index >= 0) { // 同じパネルがある場合は古いものを消す。
