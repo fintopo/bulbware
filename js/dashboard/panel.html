@@ -1,0 +1,79 @@
+{%}panel_tagName{%}
+{%}panel_className{%}panel panel-default
+{%}panel{%}
+<div class="panel-heading jsbtn_current">
+	<div class="right icon" data-toggle="popover" data-trigger="hover" title="" data-content="このパネルを閉じる" data-placement="left">
+		<i class="fa fa-times x-large jsbtn_close_panel"></i>
+	</div>
+	<div class="right icon" data-toggle="popover" data-trigger="hover" title="" data-content="このパネルを別のウィンドウで開く" data-placement="left">
+		<i class="fa fa-external-link x-large jsbtn_open_window"></i>
+	</div>
+	<div class="right icon" data-toggle="popover" data-trigger="hover" title="" data-content="このパネルのアドレスを表示する" data-placement="left">
+		<i class="fa fa-qrcode x-large jsbtn_permalink"></i>
+	</div>
+	<div class="js_title left"></div>
+	<div class="clear"></div>
+</div>
+<div class="panel-body">
+	<div class="no-current-show">
+		<div class="panel-navigation jsbtn_set_selected"></div>
+	</div>
+	<div class="js_detail"></div>
+</div>
+<div class="panel-footer js_footer"></div>
+
+{%}panel_only_close_tagName{%}
+{%}panel_only_close_className{%}panel panel-default
+{%}panel_only_close{%}
+<div class="panel-heading jsbtn_current">
+	<div class="right icon" data-toggle="popover" data-trigger="hover" title="" data-content="このパネルを閉じる" data-placement="left">
+		<i class="fa fa-times x-large jsbtn_close_panel"></i>
+	</div>
+	<div class="js_title left"></div>
+	<div class="clear"></div>
+</div>
+<div class="panel-body">
+	<div class="no-current-show">
+		<div class="panel-navigation jsbtn_set_selected"></div>
+	</div>
+	<div class="js_detail"></div>
+</div>
+<div class="panel-footer js_footer"></div>
+
+
+{%}start_panel_tagName{%}
+{%}start_panel_className{%}no-current-show
+{%}start_panel_title{%}スタートパネル
+{%}start_panel{%}
+<div class="row">
+	<div class="col-xs-6">
+	</div>
+	<div class="col-xs-6">
+	</div>
+</div>
+
+{%}permalink{%}
+<div class="modal fade" id="modal-permalink" tabindex="-1" role="dialog" aria-labelledby="modal-permalink-label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title" id="modal-permalink-label">Permalink</h4>
+      </div>
+      <div class="modal-body">
+				<input type="text" class="jsinput_permalink" value="$(.permalink)" />
+				<img src="http://chart.apis.google.com/chart?cht=qr&chs=200x200&choe=UTF-8&chld=|1&chl=$(.permalink)" />
+			</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{%}confirm_copy{%}
+この$(_title)をコピーします。
+
+{%}info_copied{%}
+$(_title)をコピーしました。
+保存すると有効になります。

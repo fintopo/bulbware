@@ -1,9 +1,11 @@
 define([
   'bulbware/view'
-  ,'models/todo'
-  ,'text!views/todo.html'
+  ,'todo/models/todo'
+  ,'text!todo/todo.html'
 ], function(bulbwareView, models, templates){
   templates = SNBinder.get_named_sections_text(templates);
+  //
+  var obj_name = 'todo';
   //
   var Projects = new models.Collection.Projects();
   //
@@ -11,8 +13,8 @@ define([
     modelEvents: {
       sync: 'render'
     }
-    ,onSelectItem: function(){
-      Backbone.history.navigate('project/'+this.model.id, {trigger: true});
+    ,triggers: {
+      'click': 'click'
     }
   });
   bulbwareView.mixin.template(viewProject, templates, 'item');
@@ -25,12 +27,23 @@ define([
       _this.collection = Projects;
       _this.collection.search();
     }
+    ,childEvents: {
+      'click': 'onClick'
+    }
+    ,onClick: function(child, values){
+      var _this = this;
+      //
+      _this.triggerMethod('callOrder', obj_name, values.model.id);
+    }
   });
   bulbwareView.mixin.template(viewProjects, templates, 'list');
   bulbwareView.mixin.list(viewProjects);
   //
   var viewHeader = Marionette.ItemView.extend({
-    ui: {
+    modelEvents: {
+      sync: 'toView'
+    }
+    ,ui: {
       first: '.jsinput_name'
       ,name: '.jsinput_name'
       ,'memo': '.jsinput_memo'
@@ -81,6 +94,8 @@ define([
       });
       //
       _this.model.save();
+      //
+      return true;
     }
   });
   bulbwareView.mixin.toggleEdit(viewDetail);
@@ -103,19 +118,13 @@ define([
   bulbwareView.mixin.template(viewDetails, templates, 'details');
   //
   var panelProject = Marionette.LayoutView.extend({  
-    getFragment: function(){
-      return 'project/'+this.model.id;
-    }
+    objName: obj_name
+    ,flagShowNoCurrent: true
+    ,noCurrent: true
     ,initialize: function(options) {
       var _this = this;
       //
-      _this.view_header = new viewHeader({
-        model: options.model
-      });
-      //
-      _this.view_details = new viewDetails({
-        model: options.model
-      });
+      _this.model = new models.Model.Project();
     }
     ,regions: {
       'header': '.header'
@@ -124,8 +133,21 @@ define([
     ,onRender: function(){
       var _this = this;
       //
+      _this.view_header = new viewHeader({
+        model: _this.model
+      });
       _this.header.show(_this.view_header);
+      //
+      _this.view_details = new viewDetails({
+        model: _this.model
+      });
       _this.details.show(_this.view_details);
+    }
+    ,setID: function(id){
+      var _this = this;
+      //
+      _this.model.id = id;
+      _this.model.fetch();
     }
     ,onDelete: function(){
       return !window.confirm('削除します');
@@ -134,15 +156,15 @@ define([
       this.closePanel();
     }
   });
-  bulbwareView.mixin.edit(panelProject);
+  bulbwareView.mixin.view(panelProject);
   bulbwareView.mixin.template(panelProject, templates, 'project');
   //
   return {
-    Projects: Projects
+    name: obj_name
     ,View: {
-      Project: viewProject
-      ,Projects: viewProjects
-      ,panelProject: panelProject
+      panel: panelProject
     }
+    ,viewMenu: viewProjects
+    ,collection: Projects
   };
 });

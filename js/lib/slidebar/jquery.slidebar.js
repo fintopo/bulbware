@@ -49,6 +49,7 @@
             var options = $this.data(namespace).options;
             var mx = e.pageX;
             var my = e.pageY;
+            var init_open = methods.isOpen.apply(_this);
             //
             if (typeof options.onMouseDown == 'function') {
               options.onMouseDown.call($this, mx, my);
@@ -60,16 +61,16 @@
               var f_expand = false;
               switch (options.mode) {
               case 'position':
-                var width, height;
+                var offset = Number($this.css(options.position).replace('px', ''));
+                var height = $this.height();
+                var width = $this.width();
                 switch(options.position) {
                 case 'top':
-                  var top = Number($this.css('top').replace('px', ''));
-                  height = Number($this.css('height').replace('px', ''));
                   if (height > options.height) {
-                    top += (height - options.height);
+                    offset += (height - options.height);
                   }
-                  params.top = (top - my) + e.pageY;
-                  if ((options.height + params.top) <= (options.closeHeight - options.height + options.minSize)) {
+                  params.top = (offset - my) + e.pageY;
+                  if (init_open && (height + offset < options.minSize)) {
                     f_close = true;
                     params.top = options.closeHeight - options.height;
                   } else if (params.top > 0) {
@@ -78,13 +79,12 @@
                   }
                   break;
                 case 'bottom':
-                  var bottom = Number($this.css('bottom').replace('px', ''));
                   height = Number($this.css('height').replace('px', ''));
                   if (height > options.height) {
-                    bottom += (height - options.height);
+                    offset += (height - options.height);
                   }
-                  params.bottom = bottom + my - e.pageY;
-                  if ((options.height + params.bottom) <= (options.closeHeight - options.height + options.minSize)) {
+                  params.bottom = offset + my - e.pageY;
+                  if (init_open && (height + offset < options.minSize)) {
                     f_close = true;
                     params.bottom = options.closeHeight - options.height;
                   } else if (params.bottom > 0) {
@@ -93,13 +93,12 @@
                   }
                   break;
                 case 'right':
-                  var right = Number($this.css('right').replace('px', ''));
                   width = Number($this.css('width').replace('px', ''));
                   if (width > options.width) {
-                    right += (width - options.width);
+                    offset += (width - options.width);
                   }
-                  params.right = right + mx - e.pageX;
-                  if ((options.width + params.right) <= (options.closeWidth - options.width + options.minSize)) {
+                  params.right = offset + mx - e.pageX;
+                  if (init_open && (width + offset < options.minSize)) {
                     f_close = true;
                     params.right = options.closeWidth - options.width;
                   } else if (params.right > 0) {
@@ -108,14 +107,13 @@
                   }
                   break;
                 case 'left':
-                  var left = Number($this.css('left').replace('px', ''));
                   width = Number($this.css('width').replace('px', ''));
                   if (width > options.width) {
-                    left += (width - options.width);
+                    offset += (width - options.width);
                   }
-                  params.left = (left - mx) + e.pageX;
+                  params.left = (offset - mx) + e.pageX;
                   params.width = options.width;
-                  if ((options.width + params.left) <= (options.closeWidth - options.width + options.minSize)) {
+                  if (init_open && (width + offset < options.minSize)) {
                     f_close = true;
                     params.left = options.closeWidth - options.width;
                   } else if (params.left > 0) {
@@ -128,32 +126,32 @@
                 switch(options.position) {
                 case 'top':
                   params.height =   ( $this.height() - my ) + e.pageY;
-                  if (params.height <= (options.closeHeight + options.minSize)) {
+                  if (init_open && (params.height <= (options.closeHeight + options.minSize))) {
                     f_close = true;
                     params.height = options.closeHeight;
                   }
                   break;
                 case 'bottom':
                   params.height = $this.height() + my - e.pageY;
-                  if (params.height <= (options.closeHeight + options.minSize)) {
+                  if (init_open && (params.height <= (options.closeHeight + options.minSize))) {
                     f_close = true;
                     params.height = options.closeHeight;
                   }
                   break;
                 case 'right':
                   params.width = $this.width() + mx - e.pageX;
-                  if (params.width <= (options.closeWidth + options.minSize)) {
+                  if (init_open && (params.width <= (options.closeWidth + options.minSize))) {
                     f_close = true;
                     params.width = options.closeWidth;
                   }
                   break;
                 case 'left':
                   params.width =   ( $this.width() - mx ) + e.pageX;
-                  if (params.width <= (options.closeWidth + options.minSize)) {
+                  if (init_open && (params.width <= (options.closeWidth + options.minSize))) {
                     f_close = true;
                     params.width = options.closeWidth;
                   }
-                  f_expand = (params.width > Number(options.width.replace('px', '')));
+                  f_expand = (params.width > Number(String(options.width).replace('px', '')));
                 }
               }
               //
@@ -176,6 +174,44 @@
               return false;
             }).one('mouseup', function() {
               $(document).off('mousemove.'+namespace);
+              // 
+              var flag_close = false;
+              switch (options.mode) {
+              case 'position':
+                var offset = Number($this.css(options.position).replace('px', ''));
+                switch(options.position) {
+                case 'top':
+                case 'bottom':
+                  if ($this.height() + offset < options.minSize) {
+                    flag_close = true;
+                  }
+                  break;
+                case 'right':
+                case 'left':
+                  if ($this.width() + offset < options.minSize) {
+                    flag_close = true;
+                  }
+                  break;
+                }      
+              default: // mode:width
+                switch(options.position) {
+                case 'top':
+                case 'bottom':
+                  if ($this.height() < options.minSize) {
+                    flag_close = true;
+                  }
+                  break;
+                case 'right':
+                case 'left':
+                  if ($this.width() < options.minSize) {
+                    flag_close = true;
+                  }
+                  break;
+                }      
+              }        
+              if (flag_close) {
+                methods.close.apply(_this);
+              }
               //
               if (typeof options.onMouseUp == 'function') {
                 options.onMouseUp.call($this);
@@ -203,6 +239,11 @@
         $(window).unbind('.'+namespace);
         $this.removeData(namespace);
       });
+    }
+    ,isOpen: function(){
+      var $this = $(this);
+      var options = $this.data(namespace).options;
+      return $this.hasClass(options.classOpen);
     }
     ,toggle: function(){
       var $this = $(this);
@@ -260,6 +301,7 @@
     },
     close: function(options){
       var $this = $(this);
+      if (!$this.data(namespace)) return;
       options = $.extend($this.data(namespace).options, options);
       //
       if (typeof options.onBeforeClose == 'function') {

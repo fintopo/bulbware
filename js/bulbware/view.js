@@ -2,14 +2,24 @@ define([
   'bulbware/lib'
   ,'bulbware/obj'
   ,'standard/lib'
-  ,'text!standard/template/panel.html'
+  ,'text!standard/templates/panel.html'
+  ,'moment'
+  ,'underscore.string'
   //
   ,'bower_components/applyStyles/jquery.apply_styles'
-], function(bulbwareLib, bulbwareObj, standardLib, panel_templates){
+], function(bulbwareLib, bulbwareObj, standardLib, panel_templates, moment, _s){
   panel_templates = SNBinder.get_named_sections_text(panel_templates);
   //
-  var bindTemplate = function(template, attributes){
-    return SNBinder.bind(template, _.extend({
+  var bindTemplate = function(template, attributes, templates){
+    var step = _(template).clone();
+    while (step.indexOf('$(_templates.') > 0) {
+      step = SNBinder.bind(step, _.extend({
+        id_s: (_.result(attributes, 'id') || '新規登録')
+        ,templates: templates
+      }, attributes, bulbwareObj.templateParams));
+    }
+    //
+    return SNBinder.bind(step, _.extend({
       id_s: (_.result(attributes, 'id') || '新規登録')
     }, attributes, bulbwareObj.templateParams));
   };
@@ -24,17 +34,18 @@ define([
       try {
         var mode_section = _.result(attributes, 'mode_section');
         var template = templates[section+(mode_section || '')] || templates[section];
-        return bindTemplate(template, _.extend({}, attributes, options.additionalTemplateParams));
+        return bindTemplate(template, _.extend({}, attributes, options.additionalTemplateParams), templates);
       } catch (e) {
         console.log(e, section, mode_section, templates, attributes);
       }
     };
     //
     var property = {
-      tagName: _.trim(templates[section+'_tagName']) || 'div'
-      ,className: _.trim(templates[section+'_className']) || ''
+      tagName: _s.trim(templates[section+'_tagName']) || 'div'
+      ,className: _s.trim(templates[section+'_className']) || ''
       ,templates: templates
       ,template_section: section
+      ,template_options: options
       ,template: function(attributes){
         return createHTML(section, attributes);
       }
@@ -43,7 +54,7 @@ define([
     //
     if (view.prototype.childView) {
       _(property).extend({
-        childViewContainer: _.trim(templates[section+'_container']) || ''
+        childViewContainer: _s.trim(templates[section+'_container']) || ''
       });
     }
     //
@@ -53,10 +64,23 @@ define([
   var mixinView = function(view){
     // Viewの共通機能
     bulbwareLib.mixin(view, {
-      onShow: function(){
+      adjust: function(){
+        this.triggerMethod('applyStyles');
+        standardLib.adjustView.call(this);
+      }
+      ,onAdjust: function(){
+        this.adjust();
+      }
+      ,onShow: function(){
         _.result(this, 'adjust');
       }
       ,onRender: function(){
+        this.triggerMethod('applyStyles');
+        if (this._isShown){
+          _.result(this, 'adjust');
+        }
+      }
+      ,onApplyStyles: function(){
         if (this.templates) {
           var params = $.fn.applyStyles('parse', {
             css: 'main {' + (this.templates[this.template_section+'_style'] || '') + '}'
@@ -67,48 +91,82 @@ define([
           });   
         }
         this.$el.applyStyles(this.styles);
-        //
-        if (this._isShown){
-          _.result(this, 'adjust');
-        }
       }
-      ,scrollTop: function(mode, options){
+      ,getScrollOptions: function(){
         var _this = this;
         //
-        options = _.extend({
-          offset: 0
-        }, options);
+        return _.extend({
+          mode: true
+          ,offset: 60
+        }, _(_this).result('optionsScroll'));
+      }
+      ,scrollTop: _.debounce(function(){
+        var _this = this;
         //
-        if (mode) {
+        var options = _this.getScrollOptions();
+        if (options.mode) {
           var top = _this.$el.offset().top;
           top -= options.offset;
           $('html,body').animate({ scrollTop: top }, 'slow');
         } else {
           _this.$el.get(0).scrollIntoView(true);
         }
+      }, 300)
+      ,insertHeader: function($this, view_header, max_height, options){
+        // 印刷用ページにするため1ページ毎にページヘッダを挿入する
+        // $thisの位置がmax_heightをオーバーしていたらview_headerを挿入する
+        var _this = this;
+        //
+        options = _.extend({
+          forceOutHeader: true // trueにするとヘッダ(Hタグ)がページの最後に残らないようにする。
+        }, options);
+        //
+        var offset = $this.offset();
+        var height = $this.outerHeight(true);
+        if (offset.top + height >= max_height) {
+          var view = new view_header({
+            model: _this.model
+          });
+          view.render();
+          //
+          var $prev = $this.prev();
+          if (options.forceOutHeader && $prev.length && _($prev.get(0).tagName.toLowerCase()).startsWith('h')) {
+            $prev.before(view.$el);
+          } else {
+            $this.before(view.$el);
+          }
+          //
+          return view.$el.offset().top;
+        }
+        return false;
       }
     });
   };
   //
   var mixinEdit = function(view){
     // 編集用にする
+    mixinView(view);
     bulbwareLib.mixin(view, {
       save: function(callback){
         var _this = this;
         //
-        _this.triggerMethod('save');
+        var breakSave = _this.triggerMethod('save');
+        if (breakSave) {
+          _this.triggerMethod('break:save');
+          return;
+        }
         //
         var flagNew = _this.model.isNew();
         _this.listenToOnce(_this.model, 'sync', function(){
           _.defer(function(){
-            if (flagNew && _this.model.collection && !_this.model.flagAdd) {
+            if (flagNew && _this.model.collection) {
               _this.model.collection.add(_this.model);
             }
             //
             _this.triggerMethod('after:save', flagNew);
             //
             if (_.isFunction(callback)) {
-              callback();
+              callback(flagNew);
             }
           });
         });
@@ -140,7 +198,7 @@ define([
         //
         _this.triggerMethod('delete', values);
         if (values.wait) {
-          commonLib.wait(function(){
+          bulbwareLib.wait(function(){
             return !values.wait;
           }, function(){
             destroyModel();
@@ -149,9 +207,15 @@ define([
           destroyModel();
         }
       }      
+      ,copyView: function(){
+        var _this = this;
+        //
+        _this.triggerMethod('copyView', _this.model);
+      }
       ,events: {
         'click .jsbtn_save': 'clickSave'
         ,'click .jsbtn_delete': 'clickDelete'
+        ,'click .jsbtn_copy': 'clickCopy'
       }
       ,clickSave: function(){
         this.save();
@@ -159,9 +223,13 @@ define([
       ,clickDelete: function(){
         this.deleteModel();
       }
+      ,clickCopy: function(){
+        this.copyView();
+      }
     });
   };
-  var mixinDetailEdit = function(view){
+  var mixinDetailEdit = function(view, delete_method){
+    delete_method || (delete_method = 'removeCollection');
     // 明細編集用にする
     mixinView(view);
     bulbwareLib.mixin(view, {
@@ -180,7 +248,7 @@ define([
       }
       ,deleteDetail: function(){
         var _this = this;
-        if (!_.result(this.model, 'checkEdit')) return;
+        if (_this.model.checkEdit && !_this.model.checkEdit()) return;
         //
         var values = {
           breakDelete: false
@@ -190,12 +258,12 @@ define([
           if (values.breakDelete) {
             return;
           }
-          _this.model.removeCollection();
+          _this.model[delete_method]();
         };
         //
         _this.triggerMethod('delete', values);
         if (values.wait) {
-          commonLib.wait(function(){
+          bulbwareLib.wait(function(){
             return !values.wait;
           }, function(){
             destroyModel();
@@ -206,28 +274,59 @@ define([
       }
     });
   };
-  //
-  var mixinToggleEdit = function(view){
-    // 開閉型編集にする
-    mixinDetailEdit(view);
+  var mixinOnDeleteDetail = function(view, text){
     bulbwareLib.mixin(view, {
-      initialize: function(options) {
+      onDelete: function(values){
+        var _this = this;
+        //
+        values.wait = true;
+        standardLib.confirm(bulbwareObj.templateParams.Text.ConfirmDelete, function(){
+          values.wait = false;
+        }, function(){
+          values.breakDelete = true;
+          values.wait = false;
+        });
+      }
+    });
+  };
+  //
+  var mixinToggleEdit = function(view, delete_method, options){
+    // 開閉型編集にする
+    var options_scroll = _.extend({}, _(standardLib.toggleEditOptions).result('scrollOptions'), _(options).result('scrollOptions'));
+    //
+    mixinDetailEdit(view, delete_method);
+    bulbwareLib.mixin(view, {
+      optionsScroll: options_scroll
+      ,initialize: function(options) {
         options = options || {};
         this.listenTo(this, 'toEdit', this.setFocus);
+console.log(this.model, this.model.isNew());
         this.setIsEdit(options.is_edit || this.model.isNew() || false);
       }
       ,setIsEdit: function(value){
-        this.is_edit = value;
+        var _this = this;
+//console.log('setIsEdit', value);
+        _this.is_edit = value;
         //
         var mode_section = this.model.get('mode_section') || '_edit';
         //
-        if (value) {
-          mode_section = String(mode_section).replace('edit', 'editing');
+        if (_this.is_edit) {
+          if (String(mode_section).indexOf('editing') < 0){
+            if (String(mode_section).indexOf('edit') >= 0){
+              mode_section = String(mode_section).replace('edit', 'editing');
+            } else {
+              mode_section += '_open';
+            }
+          }
           //
           this.$el.addClass('view_open');
           this.$el.removeClass('view_close');
+          //
+          if (_(this.getScrollOptions()).result('scrollWithEditing')) {
+            this.scrollTop();
+          }
         } else {
-          mode_section = String(mode_section).replace('editing', 'edit');
+          mode_section = String(mode_section).replace('editing', 'edit').replace('_open', '');
           //
           this.$el.addClass('view_close');
           this.$el.removeClass('view_open');
@@ -240,7 +339,7 @@ define([
       ,events: {
         'click .jsbtn_to_view': 'toView'
         ,'click .jsbtn_to_edit': 'toEdit'
-        ,'click .jsbtn_save_to_view': 'saveToView'
+        ,'click .jsbtn_save_to_view': '_saveToView'
       }
       ,toEdit: function(){
         this.setIsEdit(true);
@@ -257,10 +356,13 @@ define([
       ,onShow: function(){
         this.triggerMethod((this.is_edit) ? 'toEdit': 'toView');
       }
-      ,saveToView: function(){
+      ,_saveToView: function(){
         if (!this.is_edit) return;
         if (this.model.validationError) return;
-        this.toView();
+        if (!_(this).result('saveToView')) {
+          this.toView();
+        }
+        this.triggerMethod('saveToView', this.model);
       }
     });
   };
@@ -269,13 +371,16 @@ define([
     // 伝票編集用にする
     mixinEdit(view);
     bulbwareLib.mixin(view, {
-      changeStatus: function(){
+      changeStatus: function(callback){
         var _this = this;
         //
         _this.listenToOnce(_this.model, 'sync', function(){ // fetchのoptions.successではadjustが実行されない。
           _.defer(function(){
             _this.triggerMethod('changeStatus');
-            _.result(this, 'adjust');
+            _.result(_this, 'adjust');
+            if (_.isFunction(callback)) {
+              callback();
+            }
           });
         });
         _this.model.fetch();
@@ -293,18 +398,28 @@ define([
         var _this = this;
         //
         if (_this.model.checkEdit()) {
-          _this.save(function(){
+          _this.model.changeStatus = true; // save後にステータス変更があることを示すフラグ。
+          _this.save(function(isNew){
             if (!_this.model.statusUpdateError) {
               _this.model.closeOrder(function(msgs) {
                 if (!_this.model.statusUpdateError) {
-                  _this.changeStatus();
-                }
-                if (_.isFunction(callback)) {
-                  callback();
+                  _this.changeStatus(function(){
+                    if (_.isFunction(callback)) {
+                      callback(isNew);
+                    }
+                    _this.model.changeStatus = false;
+                  });
+                } else {
+                  if (_.isFunction(callback)) {
+                    callback(isNew);
+                  }
+                  _this.model.changeStatus = false;
                 }
               }, {
                 view: _this
               });
+            } else {
+              _this.model.changeStatus = false;              
             }
           });
         } else {
@@ -313,17 +428,106 @@ define([
           }
         }
       }
+      ,planOrder: function(){
+        var _this = this;
+        //
+        var func = function(){
+          if (!_this.model.statusUpdateError) {
+            _this.model.planOrder(function(msgs) {
+              if (msgs.messages.length == 0) {
+                _this.changeStatus();
+              }
+            }, {
+              view: _this
+            });
+          }
+        };
+        //
+        if (_this.model.checkInput()){
+          _this.save(func);
+        } else if (_this.model.checkClose()) {
+          func();
+        }
+      }
+      ,cancelCloseOrder: function(){
+        var _this = this;
+        if (!_this.model.checkClose() && !_this.model.checkPlan()) return;
+        //
+        _this.model.cancelCloseOrder(function(msgs) {
+          if (msgs.messages.length == 0) {
+            _this.changeStatus();
+          }
+        }, {
+          view: _this
+        });
+      }
+      ,confirmOrder: function(date){
+        var _this = this;
+        if (!_this.model.checkClose()) return;
+        //
+        _this.save(function(){
+          if (!_this.model.statusUpdateError) {
+            _this.model.confirmOrder(function(msgs) {
+              if (msgs.messages.length == 0) {
+                _this.changeStatus();
+              }
+            }, {
+              view: _this
+              ,'Date': date
+            });
+          }
+        });
+      }
+      ,cancelConfirmOrder: function(){
+        var _this = this;
+        if (!_this.model.checkConfirm()) return;
+        //
+        _this.model.cancelConfirmOrder(function(msgs) {
+          if (msgs.messages.length == 0) {
+            _this.changeStatus();
+          }
+        }, {
+          view: _this
+        });
+      }
+      ,finishedOrder: function(date){
+        var _this = this;
+        if (!_(_this.model).result('checkClose') && !_(_this.model).result('checkPlan') && !_(_this.model).result('checkConfirm')) return;
+        //
+        _this.model.finishedOrder(function(msgs) {
+          if (msgs.messages.length == 0) {
+            _this.triggerMethod('finishedOrder');
+            _this.changeStatus();
+          }
+        }, {
+          view: _this
+          ,'Date': date
+        });
+      }
+      ,cancelFinishedOrder: function(){
+        var _this = this;
+        if (!_this.model.checkFinished()) return;
+        //
+        _this.model.cancelFinishedOrder(function(msgs) {
+          if (msgs.messages.length == 0) {
+            _this.changeStatus();
+          }
+        }, {
+          view: _this
+        });
+      }
       ,events: {
         'click .jsbtn_close_order': 'clickCloseOrder'
         ,'click .jsbtn_cancel_close_order': 'clickCancelCloseOrder'
         ,'click .jsbtn_plan_order': 'clickPlanOrder'
+        ,'click .jsbtn_confirm_order': 'clickConfirmOrder'
+        ,'click .jsbtn_cancel_confirm_order': 'clickCancelConfirmOrder'
         ,'click .jsbtn_finished_order': 'clickFinishedOrder'
         ,'click .jsbtn_cancel_finished_order': 'clickCancelFinishedOrder'
         ,'click .jsbtn_close_and_create': 'closeAndCreate'
       }
       ,clickCloseOrder: function(){
         var _this = this;
-        if (!_this.model.checkEdit()) return;
         //
         standardLib.confirm(bulbwareObj.templateParams.Text.ConfirmClose, function(){
           _this.closeOrder();
@@ -331,60 +535,44 @@ define([
       }
       ,clickPlanOrder: function(){
         var _this = this;
-        if (!_this.model.checkInput() && !_this.model.checkClose()) return;
         //
         standardLib.confirm(bulbwareObj.templateParams.Text.ConfirmPlan, function(){
-          _this.save(function(){
-            if (!_this.model.statusUpdateError) {
-              _this.model.planOrder(function(msgs) {
-                if (msgs.messages.length == 0) {
-                  _this.changeStatus();
-                }
-              }, {
-                view: _this
-              });
-            }
-          });
+          _this.planOrder();
         });
       }
       ,clickCancelCloseOrder: function(){
         var _this = this;
-        if (!_this.model.checkClose() && !_this.model.checkPlan()) return;
         //
         standardLib.confirm(bulbwareObj.templateParams.Text.ConfirmCancelClose, function(){
-          _this.model.cancelCloseOrder(function(msgs) {
-            if (msgs.messages.length == 0) {
-              _this.changeStatus();
-            }
-          }, {
-            view: _this
-          });
+          _this.cancelCloseOrder();
+        });
+      }
+      ,clickConfirmOrder: function(){
+        var _this = this;
+        //
+        standardLib.confirm(bulbwareObj.templateParams.Text.ConfirmConfirm, function(){
+          _this.confirmOrder();
+        });
+      }
+      ,clickCancelConfirmOrder: function(){
+        var _this = this;
+        //
+        standardLib.confirm(bulbwareObj.templateParams.Text.ConfirmCancelConfirm, function(){
+          _this.cancelConfirmOrder();
         });
       }
       ,clickFinishedOrder: function(){
         var _this = this;
-        if (!_this.model.checkClose()) return;
         //
         standardLib.confirm(bulbwareObj.templateParams.Text.ConfirmFinished, function(){
-          _this.model.finishedOrder(function(msgs) {
-            if (msgs.messages.length == 0) {
-              _this.changeStatus();
-            }
-          }, _this);
+          _this.finishedOrder(_(_this).result('getFinishedOrderDate'));
         });
       }
       ,clickCancelFinishedOrder: function(){
         var _this = this;
-        if (!_this.model.checkFinished()) return;
         //
         standardLib.confirm(bulbwareObj.templateParams.Text.ConfirmCancelFinished, function(){
-          _this.model.cancelFinishedOrder(function(msgs) {
-            if (msgs.messages.length == 0) {
-              _this.changeStatus();
-            }
-          }, {
-            view: _this
-          });
+          _this.cancelFinishedOrder();
         });
       }
     });
@@ -436,20 +624,33 @@ define([
         var _this = this;
         options || (options = {});
         //
-        _this.autoSelect = options.autoSelect || _this.autoSelect;
+        _this.autoSelect = _this.initAutoSelect = options.autoSelect || _this.autoSelect;
       }
       ,search: function(){
         var _this = this;
         //
-        var conditions = _.extend(_this.getConditions(), _this.optionalConditions);
-        //
-        _this.triggerMethod('search', conditions);
+        var conditions = _(_this.getConditions()).chain()
+            .reduce(function(ret, value, name){ // 値のない条件を除去する
+              if (value) {
+                ret[name] = value;
+              }
+              return ret;
+            }, {})
+            .extend(_this.optionalConditions)
+            .value();
+        var break_search = _this.triggerMethod('search', conditions);
+        if (break_search) {
+          _this.triggerMethod('after:search');
+          return false;
+        }
         //
         _this.collection.search(conditions, _.extend({
           success: function(){
             _this.triggerMethod('after:search');
           }
         }, _this.search_options));
+        //
+        return true;
       }
       ,onShow: function(){
         var _this = this;
@@ -458,9 +659,6 @@ define([
           this.search();
           _this.autoSelect = false;
         }
-      }
-      ,onDestroy: function(){
-        this.collection.reset();
       }
       ,events: {
         'click .jsbtn_search': 'clickSearch'
@@ -500,6 +698,7 @@ define([
     bulbwareLib.mixin(viewList, {
       emptyView: viewEmpty
       ,extract: function(search_text){
+        var _this = this;
         // 指定したテキストでobjViewの抽出をする
         var search_values = search_text;
         if (_.isString(search_text)) {
@@ -508,12 +707,19 @@ define([
 //console.log(search_values);
         var values = _(search_values).chain()
             .map(function(value){
-              return _(bulbwareLib.toString(value)).words();
+              return _s(bulbwareLib.toString(value)).words();
             })
             .flatten()
             .compact()
             .value();
-        this.triggerMethod('extractView', values);
+        _this.extractResults = {
+          values: values
+          ,count: 0
+          ,show: 0
+          ,hide: 0
+        };
+        _this.triggerMethod('extractView', values, _this.extractResults);
+console.log(_this.extractResults);
       }
       ,onAddChild: function(view){
         var _this = this;
@@ -530,7 +736,7 @@ define([
         //
         _this.body_text = bulbwareLib.toString(_(_this.$el.html()).stripTags());
       }
-      ,extract: function(values) {
+      ,extract: function(values, results) {
         // values（配列）に一致する文字列があれば表示する
         var _this = this;
         //
@@ -543,35 +749,44 @@ define([
             return ret;
           }, false);
         }
+        results.count++;
         if (mode) {
           _this.$el.show();
+          results.show++;
         } else {
           _this.$el.hide();
+          results.hide++;
         }
       }
     });
   };
   //
-  var mixinListView = function(viewList) {
+  var mixinListView = function(viewList, viewItem, viewEmpty) {
     // 一覧検索用にする
-    var viewItem = viewList.prototype.childView;
     mixinLoading(viewList);
     mixinExtractView(viewList, viewItem);
     bulbwareLib.mixin(viewList, {
-      addNewView: function(id, attributes){
+      emptyView: viewEmpty
+      ,addNewView: function(id, tab){
         var _this = this;
         //
         if (id || !_this.disabledAddNewView) {
-          return _this.collection.getModel(id, {
+          _this.collection.getModel(id, {
             modeAddCollection: true
-            ,model_defaults: attributes
             ,callback: function(model){
-              _this.selectItem(model);
+              _this.selectItem(model, false, tab);
             }
           });
         } else {
           _this.triggerMethod('addNewView');
         }
+      }
+      ,copyNewView: function(model){
+        var _this = this;
+        //
+        var new_model = model.copyModel();
+        _this.collection.add(new_model);
+        _this.selectItem(new_model, true);
       }
       ,getView: function(model){
         var _this = this;
@@ -585,8 +800,22 @@ define([
         //
         return view;
       }
-      ,selectItem: function(model){
-        this.triggerMethod('selectItem', model);
+      ,orderTypeItem: 'OrderType'
+      ,selectItem: function(model, flag_copy, tab){
+        var _this = this;
+        // this.orderTypesが指定されていて、modelのタイプと違う場合、選択できないようにする
+        // modelのタイプは、this.orderTypeItem で項目名を指定する
+        if (_this.orderTypes) {
+          var order_types = (_.isArray(_this.orderTypes)) ? _this.orderTypes : [_this.orderTypes];
+          if (!_(order_types).contains(Number(model.get(_this.orderTypeItem)))) {
+            model.removeCollection();
+            return;
+          }
+        }
+        //
+        var view = _this.getView(model);
+        this.triggerMethod('selectItem', model, view, flag_copy, tab);
+        model.trigger('active');
       }
       ,childEvents: {
         'selectItem': 'onChildSelectItem'
@@ -596,8 +825,18 @@ define([
       }
     });
     bulbwareLib.mixin(viewItem, {
-      triggers: {
+      modelEvents: {
+        'active': 'active'
+        ,'inactive': 'inactive'
+      }
+      ,triggers: {
         'click': 'selectItem'
+      }
+      ,active: function() {
+        this.$el.addClass('jsc_item_active');
+      }
+      ,inactive: function() {
+        this.$el.removeClass('jsc_item_active');
       }
     });
   };
@@ -622,7 +861,7 @@ define([
           view.listenTo(this, 'save', view.save);
         }
       }
-      ,addDetail: function(){
+      ,addDetail: function(callback){
         var _this = this;
         if (!_this.is_edit) return;
         //
@@ -632,148 +871,420 @@ define([
         var model = _this.collection.getModel(null, {
           modeAddCollection: true
           ,model_defaults: model_defaults
+          ,callback: callback
         });
         //
         return model;
       }
       ,save: function(){
-        this.triggerMethod('save');
+        var ret1 = this.triggerMethod('save'); // 明細のsaveを呼び出す。
+        var ret2 = this.triggerMethod('after:save');
+        return ret2 || ret1;
+      }
+      ,collectionEvents: {
+        'add': 'adjust'
       }
       ,events: {
         'click .jsbtn_add_detail': 'clickAddDetail'
       }
       ,clickAddDetail: function(){
         this.addDetail();
-        this.triggerMethod('adjust');
       }
     });
   };
-  //
-  var mixinPopupSelectMaster = function(viewPopup, viewEdit, viewList, viewItem){
-    mixinListView(viewList, viewItem);
-    //
-    mixinEdit(viewEdit);
-    bulbwareLib.mixin(viewEdit, {
-      onAfterSave: function(){
+  // ダウンロード機能
+  // FileAPI(FileSave.js)を使って、ファイルにダウンロードする
+  // Excelで読み込めるようにするため、BOMあり、UTF-16、TAB区切り、ファイルの拡張子をcsvにする。
+  // http://qiita.com/bump_of_kiharu/items/f41beec668e1f3ea675e
+  var mixinDownload = function(viewList, filename, type){
+    bulbwareLib.mixin(viewList, {
+      filenameOfDownload: filename || 'data.csv'
+      ,typeOfDownload: type || 'text/csv;charset=utf-16;'
+      ,onAddChild: function(view){
         var _this = this;
         //
-        _this.triggerMethod('appendItem', _this.model);
-        _this.model.clear();
+        view.listenTo(_this, 'download', view.download);
       }
       ,events: {
-        'keyup input': 'changeInput'
+        'click .jsbtn_download': 'download'
       }
-      ,changeInput: function(){
+      ,download: function(){
         var _this = this;
         //
-        var search_text = _this.$('input').map(function(){
-          return $(this).val();
-        }).get();
-        _this.triggerMethod('changeInput', search_text);
+        var data = [];
+        var items = _.result(_this, 'itemsOfDownload');
+        var attributes = _.result(_this, 'attributesOfDownload');
+        // タイトル1行目
+        (function(data, items, attributes){
+          var convert = function(value){
+            return String(_(language).result(value) || value).replace(/[\t\r\n]/g, ' ');
+          };
+          var language = _this.template_options.additionalTemplateParams.ObjectText;
+          var row = _(items).map(convert);
+          row = row.concat(_(attributes).map(convert));
+          row.push('id');
+          data.push(row.join('\t'));
+        })(data, items, attributes);
+        // タイトル2行目
+        (function(data, items, attributes){
+          var row = items.concat(_(attributes).map(function(attribute, index){
+            return 'Attributes'+index+'.'+attribute;
+          }));
+          row.push('id');
+          data.push(row.join('\t'));
+        })(data, items, attributes);
+        //
+        _this.triggerMethod('download', data, items, attributes);
+        data = data.join('\r\n');
+/*        // UTF-8
+        var blob = (function(data){
+          var bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+          return new Blob([bom, data], {type: _this.typeOfDownload});
+        })(data);
+*/
+        // UTF-16
+        var blob = (function(data){
+          var data_code = _(data).map(function(s){
+            return s.charCodeAt();
+          });
+          var data_u16 = new Uint16Array(data_code);
+          var bom = new Uint8Array([0xFF, 0xFE]);
+          return new Blob([bom, data_u16], {type: _this.typeOfDownload});
+        })(data);
+        //
+        saveAs(blob, _this.filenameOfDownload);
       }
     });
-    //
-    bulbwareLib.mixin(viewPopup, {
-      viewEdit: viewEdit
-      ,viewList: viewList
-      ,initialize: function(options) {
+    bulbwareLib.mixin(viewList.prototype.childView, {
+      download: function(data, items, attributes){
         var _this = this;
+        if (_this.$el.is(':hidden')) return;
         //
-        _this.sm = options.sm;
+        var convert = function(value){
+          return '"' + String(value).replace(/\t/g, ' ').replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/"/g, '""') + '"';
+        };
         //
-        _this.view_edit = new _this.viewEdit({});
-        _this.listenTo(_this.view_edit, 'appendItem', _this.appendItem);
-        _this.listenTo(_this.view_edit, 'changeInput', _this.changeInput);
-        //
-        _this.view_list = new _this.viewList({});
-        _this.listenTo(this.view_list, 'selectItem', this.selectItem);
+        var values = _(items).map(function(item){
+          return convert(_this.model.get(item));
+        });
+        values = values.concat(_(attributes).map(function(attribute){
+          return convert(_this.model.get(attribute).AttributeCode);
+        }));
+        values.push(_this.model.id || '');
+        data.push(values.join('\t'));
       }
-      ,regions: {
-        'edit': '.js_edit'
-        ,'list': '.js_list'
+    });
+  };
+  // トグル開閉機能を付いける
+  var mixinToggleButton = function(view){
+    bulbwareLib.mixin(view, {
+      events: {
+        'click .jsbtn_toggle_block': 'clickToggleBlock'
+      }
+      ,clickToggleBlock: function(e){
+        $(e.currentTarget).next().slideToggle();
+      }
+    });
+  };
+  // timeline機能をつける
+  var mixinTimeline = function(viewList){
+    var viewItem = viewList.prototype.childView;
+    bulbwareLib.mixin(viewList, {
+      ui: {
+        'view_period': '.jsinput_view_period'
+        ,'view_start_date': '.jsdate_view_start'
       }
       ,onRender: function(){
         var _this = this;
         //
-        _this.edit.show(_this.view_edit);
-        _this.list.show(_this.view_list);
-        //
-        _this.dialog = _this.$('.js_popup').dialog(_.extend({
-          width: 740,
-          minHeight: 500,
-          autoOpen: false,
-          modal: true
-        }, _this.options_dialog));
+        _this.canvas_width = _this.$('canvas').attr('width');
+        _this.canvas_height = _this.$('canvas').attr('height');
+        _this.view_days = _this.getViewPeriod();
+        _this.view_start_date = _this.getViewStartDate();
+        _this.drawTimelineHeader();
+        // マウス操作
+        var $canvas = _this.$('canvas');
+        $canvas.mousedown(function(e) {
+          var mx = e.pageX;
+          var my = e.pageY;
+          var start_date = _this.view_start_date;
+          var width_1day = _this.canvas_width / _this.view_days;
+          _this.triggerMethod('MouseDown');
+          $(document).on('mousemove.timelineCanvas', function(e) {
+            var move_day = (e.pageX - mx) / width_1day;
+            if (Math.abs(move_day) > 1) {
+              var new_start_date = moment(start_date).add(move_day, 'days');
+              if (new_start_date.isValid()) {
+                _this.moveTimeline(new_start_date.format('YYYY-MM-DD'), _this.view_days);
+              }
+            }
+            return false;
+          }).one('mouseup.timelineCanvas', function() {
+            $(document).off('mousemove.timelineCanvas');
+            // click
+            if ((mx == e.pageX) && (my == e.pageY)) {
+              var move_day = _this.view_days / 3;
+              var px = mx - $canvas.offset().left;
+              if (px < _this.canvas_width / 10) {
+                move_day *= -1;
+              } else if (px < _this.canvas_width * 9 / 10) {
+                move_day = 0;
+              }
+              if (move_day) {
+                var new_start_date = moment(start_date).add(move_day, 'days');
+                if (new_start_date.isValid()) {
+                  _this.moveTimeline(new_start_date.format('YYYY-MM-DD'), _this.view_days);
+                }
+              }
+            }
+            //
+            _this.triggerMethod('MouseUp');
+            return false;
+          });
+          return false;
+        });
       }
-      ,setData: function(values){
-        this.view_list.collection.reset(values);
-      }
-      ,selectItem: function(model){
+      ,drawTimelineHeader: function(){
+        // アクション描画
         var _this = this;
         //
-        var ms = _this.sm.magicSuggest;
-        ms.clear(true);
-        ms.addToSelection(model.attributes);
-        _this.dialog.dialog('close');
+        var $canvas = _this.$('canvas');
+        var canvas = $canvas.get(0);
+        if (!canvas.getContext) return;
+        var w = _this.canvas_width;
+        var h = _this.canvas_height;
+        var x0 = 0;
+        var y0 = 25;
+        var scale_size = 5;
+        var text_height = 20;
+        var width_1day = w / _this.view_days;
+        var getDayX = function(day){ // 日数からX座標を計算する
+          return day * width_1day;
+        };
+        var getDateX = function(event_date){ // 日付からX座標を計算する
+          var days = moment(_this.view_start_date).diff(event_date, 'days');
+          return getDayX(days);
+        };
+        //
+        var context = canvas.getContext('2d');
+        context.strokeStyle = 'black';
+        context.fillStyle = 'black';
+        context.font = '10pt sans-serif';
+        // タイムライン
+        context.beginPath();
+        context.clearRect(0, 0, w, h);
+        context.moveTo(x0, y0);
+        context.lineTo(w, y0);
+        context.closePath();
+        _(_this.view_days).times(function(day){
+          var x = getDayX(day);
+          //
+          var d = moment(_this.view_start_date).subtract(day, 'days');
+          if (d.weekday() == 1) {
+            context.moveTo(x, y0 - scale_size);
+            context.lineTo(x, h);
+            //
+            var t = d.format('M/D');
+            var tm = context.measureText(t);
+            context.fillText(t, x - tm.width / 2, y0 - scale_size * 1.5);   	  
+          } else {
+            context.moveTo(x, y0 - scale_size);
+            context.lineTo(x, y0 + scale_size);
+          }
+          //
+          context.closePath();
+        });
+        context.stroke();   
+        // 表示期間移動用アイコン
+        var bm = 5;
+        var bw = (_this.canvas_width / 10) - bm;
+        // 左
+        context.moveTo(bm, y0);
+        context.lineTo(bw, y0 - bw / 2);
+        context.lineTo(bw, y0 + bw / 2);
+        context.closePath();
+        // 右
+        context.moveTo(_this.canvas_width - bm, y0);
+        context.lineTo(_this.canvas_width - bw, y0 - bw / 2);
+        context.lineTo(_this.canvas_width - bw, y0 + bw / 2);
+        context.closePath();
+        //
+        context.fillStyle = 'rgba(100, 100, 100, 0.5)';
+        context.fill();   
       }
-      ,appendItem: function(model){
+      ,childViewOptions: function(){
         var _this = this;
         //
-        _this.sm.setValue({});
-        _this.selectItem(model);
+        return {
+          view_period: _this.getViewPeriod()
+          ,view_start_date: _this.getViewStartDate()
+        };
       }
-      ,changeInput: function(search_text){
-        this.view_list.extract(search_text);
-      }
-      ,events: {
-        'click .jsbtn_open_popup': 'openPopup'
-        ,'click .jsbtn_add_item': 'appendItem'
-      }
-      ,openPopup: function(){
+      ,onAddChild: function(view){
         var _this = this;
         //
-        _this.dialog.dialog('open');
+        view.listenTo(_this, 'changeTimeline', view.changeTimeline);
+        view.listenTo(_this, 'getSelected', view.getSelected);
+        view.listenTo(_this, 'showDetails', view.showDetails);
+      }
+      ,showDetails: function(mode){
+        var _this = this;
+        //
+        _this.triggerMethod('showDetails', mode);
+      }
+      ,triggers: {
+        'change @ui.view_period': 'changeTimeline'
+        ,'change @ui.view_start_date': 'changeTimeline'
+      }
+      ,onChangeTimeline: function(){
+        var _this = this;
+        //
+        _this.view_days = _this.getViewPeriod();
+        _this.view_start_date = _this.getViewStartDate();
+        _this.drawTimelineHeader();
+      }
+      ,getViewPeriod: function(){
+        var _this = this;
+        //
+        return _this.ui.view_period.val();
+      }
+      ,getViewStartDate: function(){
+        return this.ui.view_start_date.val();
+      }
+      ,getSelected: function(){
+        var _this = this;
+        //
+        var models = [];
+        _this.triggerMethod('getSelected', models);
+        return models;
+      }
+      ,moveTimeline: function(start_date, period){
+        var _this = this;
+        //
+        _this.ui.view_period.val(period);
+        _this.ui.view_start_date.val(start_date).change();
+      }
+      ,childEvents: {
+        'moveTimeline': 'childMoveTimeline'
+      }
+      ,childMoveTimeline: function(view, start_date, period){
+        this.moveTimeline(start_date, period);
       }
     });
-  };
-  // ファイルアップロード
-  var mixinUploadFile = function(view){
-    bulbwareLib.mixin(view, {
-      flag_uploading: false
-      ,uploadFile: function(e){
+    bulbwareLib.mixin(viewItem, {
+      initialize: function(options) {
         var _this = this;
-        if (_this.flag_uploading) return false;
-        if (!_this.model.id) return false;
-        if (!_this.$('.js_file :file').val()) return false;
         //
-        _this.flag_uploading = true;
-        var backup = $(e.target).html();
-        $(e.target).html(bulbwareObj.templateParams.Text.loading);
-        //
-        var form = _this.$('.js_file').get()[0];
-        _this.model.uploadFile(form, {
-          error: function() {
-            console.log('error');
-            $(e.target).html(backup);
-            _this.flag_uploading = false;
-          },
-          success: function(ret) {
-            var blob_key = ret.blob_key;
-            _this.model.set_options({
-              image: blob_key
-            });
-            _this.$('.js_image').attr('src', '/picture?key='+blob_key);
-            _this.$('.js_file :file').val('');
-            $(e.target).html(backup);
-            _this.flag_uploading = false;
-          }
-        });
-        
-        // false を返してデフォルトの動作をキャンセル
-        return false;      
+        _this.view_days = options.view_period || 7;
+        _this.view_start_date = options.view_start_date || moment();
       }
-      ,events: {
-        'click .jsbtn_upload_file': 'uploadFile'
+      ,ui: {
+        'select': '.jscheck_select'
+      }
+      ,onRender: function(){
+        var _this = this;
+        //
+        _this.canvas_width = _this.$('canvas').attr('width');
+        _this.canvas_height = _this.$('canvas').attr('height');
+        _this.drawTimeline();
+      }
+      ,drawTimeline: function(){
+        // アクション描画
+        var _this = this;
+        //
+        var $canvas = _this.$('canvas');
+        var canvas = $canvas.get(0);
+        if (!canvas.getContext) return;
+        var w = _this.canvas_width;
+        var h = _this.canvas_height;
+        var x0 = 0;
+        var y0 = 25;
+        var scale_size = 5;
+        var text_height = 20;
+        var width_1day = w / _this.view_days;
+        var getDayX = function(day){ // 日数からX座標を計算する
+          return day * width_1day;
+        };
+        var getDateX = function(event_date){ // 日付からX座標を計算する
+          var days = moment(_this.view_start_date).diff(event_date, 'days');
+          return getDayX(days);
+        };
+        //
+        var context = canvas.getContext('2d');
+        context.strokeStyle = 'black';
+        context.fillStyle = 'black';
+        context.font = '10pt sans-serif';
+        // タイムライン
+        context.beginPath();
+        context.clearRect(0, 0, w, h);
+        context.moveTo(x0, y0);
+        context.lineTo(w, y0);
+        context.closePath();
+        _(_this.view_days).times(function(day){
+          var x = getDayX(day);
+          //
+          var d = moment(_this.view_start_date).subtract(day, 'days');
+          if (d.weekday() == 1) {
+            context.moveTo(x, 0);
+            context.lineTo(x, h);
+          } else {
+            context.moveTo(x, y0 - scale_size);
+            context.lineTo(x, y0 + scale_size);
+          }
+          //
+          context.closePath();
+        });
+        context.stroke();   
+        // アクション
+        context.beginPath();     
+        var marker_size = Math.min(getDayX(1) / 2, 8);
+        _(_this.getEvents()).each(function(event){      
+          var start_date = event.start_date;
+          var end_date = event.end_date;
+          if (moment(start_date).isAfter(end_date)) {
+            var t = bulbwareLib.swap(start_date, end_date);
+            start_date = t[0];
+            end_date = t[1];
+          }
+          // 描画条件設定
+          context.strokeStyle = event.strokeStyle || 'black';
+          context.fillStyle = event.fillStyle || 'black';
+          context.font = event.font || '10pt sans-serif';
+          // マークを表示する
+          var event_start_x = getDateX(end_date);
+          _(moment(end_date).diff(start_date, 'days') + 1).times(function(days){
+            var x = event_start_x + getDayX(days);
+            switch (event.mark) {
+            case 'circle':
+              context.arc(x, y0, marker_size, 0, Math.PI*2, true);
+              context.fill();
+              break;
+            }
+          });
+          // title表示
+          context.fillText(event.title, event_start_x, y0 - marker_size - 5);
+        });
+        context.stroke();        
+      }
+      ,changeTimeline: function(values){
+        var _this = this;
+        //
+        _this.view_days = values.view.getViewPeriod();
+        _this.view_start_date = values.view.getViewStartDate();
+        _this.drawTimeline();
+      }
+      ,getSelected: function(models){
+        var _this = this;
+        //
+        if (_this.ui.select.checked()) {
+          models.push(_this.model);
+        }
+      }
+      ,showDetails: function(mode){
+        var _this = this;
+        //
+        var method = (_this.getShowMode(mode)) ? 'show' : 'hide';
+        _this.$el[method]();
       }
     });
   };
@@ -797,211 +1308,6 @@ define([
       };
     };
   };
-  // パネル管理
-  var viewPanel = Marionette.LayoutView.extend({
-    regions: {
-      'body': '.js_body'
-    }
-    ,onRender: function(){
-      var _this = this;
-      //
-      _this.body.show(_this.options.view);
-    }
-    ,isCurrent: function(){
-      return this.$el.hasClass('current');
-    }
-    ,setCurrent: function(){
-      var _this = this;
-      //
-      _this.$el.parent().children().removeClass('current');
-      _this.$el.addClass('current');
-    }
-    ,unsetCurrent: function(){
-      var _this = this;
-      //
-      _this.$el.removeClass('current');
-      _this.triggerMethod('unsetCurrent', this);
-    }
-    ,triggers: {
-      'click .jsbtn_close_panel': 'closePanel'
-      ,'click .jsbtn_open_window': 'openWindow'
-      ,'click .jsbtn_permalink': 'click:permalink'
-      ,'click .jsbtn_set_current': 'setCurrent'
-      ,'click .jsbtn_current': 'clickCurrent'
-      ,'click .jsbtn_call_order': 'clickCallOrder'
-    }
-    ,closePanel: function(){
-      var _this = this;
-      //
-      _this.triggerMethod('closePanel', {
-        view: _this
-        ,model: _this.model
-      });
-    }
-    ,onClosePanel: function(){
-      var _this = this;
-      //
-      _.defer(function(){
-        _this.destroy();
-      });
-    }
-    ,onClickCurrent: function(){
-      this.setCurrent();
-    }
-    ,onClickCallOrder: function(e){
-      var _this = this;
-      //
-      var obj = $(e.currentTarget).data('obj');
-      var id = $(e.currentTarget).data('id');
-      this.triggerMethod('callOrder', obj, id);
-    }
-    ,getFragment: function(){
-      return this.options.view.getFragment();
-    }
-  });
-  mixinView(viewPanel);
-  //
-  var panelController = function(options){
-    options = _.extend({
-      selector: '#main'
-      ,maxPanels: 10
-      ,onBeforeShow: function(view){}
-      ,onAfterShow: function(view){}
-      ,onSetCurrent: function(view){}
-      ,mixinTypes: {}
-    }, options);
-    var panels = [];
-    //
-    var searchIndex = function(view){
-      return _(panels).reduce(function(ret, panel, index){
-        return ((panel.name == view.objName) && (panel.id == _.result(view.model, 'id'))) ? index : ret;
-      }, -1);
-    };
-    //
-    return {
-      search: function(name, id){
-        if (!name) return;
-        if (!id) return;
-        return _(panels).findWhere({name: name, id: id});
-      }
-      ,show: function(view, template){
-        template || (template = 'standard');
-        var baseView = viewPanel.extend();
-        mixinTemplate(baseView, panel_templates, template);
-        bulbwareLib.mixin(baseView, _.result(options.mixinTypes, template));
-        var view_panel = new baseView({
-          view: view
-        });
-        options.onBeforeShow.call(this, view_panel);
-        //
-        $(options.selector).append(view_panel.$el);
-        view_panel._isShown = true;
-        view_panel.render();
-        this.setCurrent(view_panel);
-        //
-        var index = searchIndex(view);
-        panels.push({
-          name: view.getFragment()
-          ,view: view_panel
-        });
-        if (index >= 0) { // 同じパネルがある場合は古いものを消す。
-          panels[index].view.destroy();
-          panels.splice(index, 1);
-        }
-        if (panels.length > options.maxPanels) {
-          var panel = panels.shift();
-          panel.view.destroy();
-        }
-        //
-        options.onAfterShow.call(this, view_panel);
-      }
-      ,close: function(view){
-        var index = searchIndex(view);
-        if (index >= 0) {
-          panels.splice(index, 1);
-        }
-        return this.last();
-      }
-      ,current: function(){
-        // カレントパネルを返す
-        return _(panels).chain()
-            .find(function(panel){
-              return panel.view.isCurrent();
-            })
-            .result('view')
-            .value();
-      }
-      ,setCurrent: function(view){
-        if (!view) return;
-        if (view == this.current()) return;
-        view.setCurrent();
-        options.onSetCurrent.call(this, view);
-      }
-      ,last: function(){
-        // 最後のパネルをカレントにする
-        var view = _(panels).chain()
-            .last()
-            .result('view')
-            .value();
-        this.setCurrent(view);
-        return view;
-      }
-      ,prev: function(){
-        // カレントを前のパネルに移動する
-        var view = _(panels).chain()
-            .reduce(function(ret, panel){
-              if (!ret.flag) {
-                if (panel.view.isCurrent()) {
-                  ret.flag = true;
-                } else {
-                  ret.view = panel.view;
-                }
-              }
-              return ret;
-            }, {
-              view: null
-              ,flag: false
-            })
-            .result('view')
-            .value();
-        this.setCurrent(view);
-        return view;
-      }
-      ,next: function(){
-        // カレントを次にパネルに移動する
-        var view = _(panels).chain()
-            .reduceRight(function(ret, panel){
-              if (!ret.flag) {
-                if (panel.view.isCurrent()) {
-                  ret.flag = true;
-                } else {
-                  ret.view = panel.view;
-                }
-              }
-              return ret;
-            }, {
-              view: null
-              ,flag: false
-            })
-            .result('view')
-            .value();
-        this.setCurrent(view);
-        return view;
-      }
-      ,move: function(scrollTop){
-        // scrollTopに近いパネルをカレントにする
-        var view = _(panels).chain()
-            .find(function(panel){
-              var top = panel.view.$el.offset().top;
-              return (top > scrollTop);
-            })
-            .result('view')
-            .value();
-        this.setCurrent(view);
-        return view;
-      }
-    };
-  };
   //
   return {
     mixin: {
@@ -1009,18 +1315,20 @@ define([
       ,view: mixinView
       ,edit: mixinEdit // 編集用にする function(view)
       ,detailEdit: mixinDetailEdit // 明細編集用にする function(view)
+      ,onDeleteDetail: mixinOnDeleteDetail // 明細削除時の確認ダイアログの表示をする
       ,toggleEdit: mixinToggleEdit // 開閉型編集にする function(view)
       ,orderEdit: mixinOrderEdit // 伝票編集用にする function(view)
       ,details: mixinDetails // 明細一覧用にする function(view)
       ,conditions: mixinConditions // 検索条件用にする function(view){
       ,list: mixinListView // 一覧検索用にする function(viewList, viewItem)
-      ,extractView: mixinExtractView // 一覧抽出機能をつける function(viewList, viewItem)
+      ,extractView: mixinListView // 一覧検索用にする function(viewList, viewItem)
+      ,extract: mixinExtractView // 一覧抽出機能をつける function(viewList, viewItem)
       ,projectDetailEdit: mixinProjectDetailEdit // プロジェクト明細用
-      ,popupSelectMaster: mixinPopupSelectMaster // マスター選択のポップアップView
-      ,uploadFile: mixinUploadFile
+      ,download: mixinDownload
+      ,toggleButton: mixinToggleButton
+      ,timeline: mixinTimeline
     }
     ,createViewList: createViewList
     ,bindTemplate: bindTemplate
-    ,panelController: panelController
   };
 });

@@ -5,26 +5,23 @@ height: 100%;
 line-height: 100%;
 
 {%}profile_css{%}
-.icon {
-  height: 100%;
-}
 button {
   -as-classes: btn btn-default btn-xs;
 }
 
 {%}profile{%}
-<img src="/icon?key=$(.Profile.id)" class="icon js_user_icon"> $(.Profile.name)
+<img src="/icon?key=$(.id)" class="icon js_user_icon"> $(.name)
 <button class="jsbtn_edit">設定</button>
 <button class="jsbtn_logout">Logout</button>
 
 
 {%}edit_profile_tagName{%}
-{%}edit_profile_className{%}profile
+{%}edit_profile_className{%}profile no-current-show
 {%}edit_profile_style{%}
 {%}edit_profile_css{%}
 {%}edit_profile{%}
 <form class="form-group clearfix js_file">
-	<img src="/icon?key=$(.Profile.id)" class="media-object pull-left js_user_icon">
+	<img src="/icon?key=$(.id)" class="media-object pull-left js_user_icon">
 	<input type="file" name="file"> 
 	<br>
 	<input type="submit" class="btn btn-default jsbtn_upload_file" value="アイコンのアップロード">

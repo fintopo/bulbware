@@ -1,15 +1,55 @@
 define([
-], function(){
+  '//cdnjs.cloudflare.com/ajax/libs/marked/0.3.2/marked.min.js'
+  ,'moment'
+  ,'underscore.string'
+], function(marked, moment, _s){
   // jQueryの拡張
+  $.fn.isVisible = function(){
+    return $(this).is(':visible');
+  };
   $.fn.checked = function(value){
     // チェックボックスを指定した引数の状態にする。
     // 引数なしの場合は状態を返す。
-    if (value == undefined) {
+    if (_.isUndefined(value)) {
       return $(this).is(':checked');
     } else if (value) {
       return $(this).prop('checked', true);
     } else {
       return $(this).prop('checked', false);
+    }
+  };
+  $.fn.asString = function(value){
+    var m;
+    if (_.isUndefined(value)) {
+      return $.trim($(this).val());
+    } else {
+      return $(this).val($.trim(value));
+    }
+  };
+  $.fn.asNumber = function(value){
+    var m;
+    if (_.isUndefined(value)) {
+      return toNumber($(this).val());
+    } else {
+      return $(this).val(toNumber(value));
+    }
+  };
+  $.fn.asDate = function(value){
+    var m;
+    if (_.isUndefined(value)) {
+      m = moment($(this).val());
+      if (m.isValid()) {
+        return m.format('YYYY-MM-DD');
+      } else {
+        return '';
+      }
+    } else {
+      m = moment(value);
+      if (m.isValid()) {
+        return $(this).val(m.format('YYYY-MM-DD'));
+      } else {
+        return $(this).val('');
+      }
     }
   };
   // SNBinder拡張
@@ -22,7 +62,18 @@ define([
     }
     return dict;
   };
-  //
+  SNBinder.numberFormat = function(value, decimals){
+    return _.numberFormat(toNumber(value), decimals);
+  };
+  SNBinder.dateFormat = function(value, format){
+    return moment(value).format(format || 'YYYY年MM月DD日');
+  };
+  SNBinder.upperCase = function(value){
+    return String(value).toUpperCase();
+  };
+  SNBinder.marked = function(value){
+    return marked(value||'').replace(/<table>/g, '<table class="table">');
+  };
   // lib
   var wait = function(check, next) {
     // check関数の戻り値がtrueならnextを実行する
@@ -95,11 +146,23 @@ define([
       return str;
     };
   })();
-  var toString = function(value) {
+  var toString = function(value, options) {
     // 入力値を文字列に整形する
+    options = _.extend({
+      removeAllBlank: false
+      ,toUpperCase: false
+    }, options);
+    //
     var str = _(value).clean();
+    if (options.removeAllBlank) {
+      str = str.replace(/\s+/g, '');
+    }
     str = toHankaku(str);
-    str = str.toLowerCase();
+    if (options.toUpperCase) {
+      str = str.toUpperCase();
+    } else {
+      str = str.toLowerCase();
+    }
     str = toZenkakuKana(str);
     return str;
   };
@@ -123,14 +186,16 @@ define([
     // 入力値を数値に整形する
     var ret = String(value);
     ret = $.trim(ret);
-    ret = ret.replace(/[^\d\.]/g,"");
     ret = toHankakuNum(ret);
+    ret = ret.replace(/[^\d\.-]/g,"");
     ret = Number(ret) || 0;
     return ret;
   };
-  var toDate = function(value) {
+  var toDate = function(value, mode_today) {
+    var init = (mode_today) ? moment().format('YYYY-MM-DD') : '';
     var ret = $.trim(value);
-    ret = (ret) ? moment(toHankaku(ret)).format('YYYY-MM-DD') : '';
+    var m = moment(toHankaku(ret));
+    ret = (m.isValid()) ? m.format('YYYY-MM-DD') : init;
     return ret;
   };
   //
@@ -202,14 +267,11 @@ define([
   };
   //
   var getCookie = (function(){
-    var cookies = _(document.cookie).chain()
-        .words(';')
-        .reduce(function(ret, value){
-          var values = _(value).words('=');
-          ret[_.trim(values[0])] = _.trim(values[1]);
-          return ret;
-        }, {})
-        .value();
+    var cookies = _(_s(document.cookie).words(';')).reduce(function(ret, value){
+      var values = _s(value).words('=');
+      ret[_s.trim(values[0])] = _s.trim(values[1]);
+      return ret;
+    }, {});
     //
     return function(name){
       return cookies[name];
@@ -217,16 +279,32 @@ define([
   })();
   //
   var swap = function(a, b) {
-    var t = a;
-    a = b;
-    b = t;
+    return [b, a];
   };
   //
-  var getToDeep = function(obj, key){
+  var getDeep = function(obj, key){
     var keys = key.split('.');
     return _(keys).reduce(function(ret, key){
       return _.result(ret, key);
     }, obj);
+  };
+  var setDeep = function(obj, key, value){
+    var keys = key.split('.');
+    if (keys.length == 1) {
+      obj[key] = value;
+    } else if (keys.length >= 2) {
+      var key0 = _(keys).initial().join('.');
+      var elm = getDeep(obj, key0);
+      if (_.isUndefined(elm)) {
+        setDeep(obj, key0, {});
+        elm = getDeep(obj, key0);
+      }
+      if (!_.isObject(elm)) {
+        throw "can't set to deep because of not object.";
+      }
+      var key1 = _(keys).last();
+      elm[key1] = value;
+    }
   };
   //
   return {
@@ -242,6 +320,7 @@ define([
     ,swap: swap
     ,checkMailAddress: checkMailAddress
     ,getCookie: getCookie
-    ,getToDeep: getToDeep
+    ,getDeep: getDeep
+    ,setDeep: setDeep
   };
 });

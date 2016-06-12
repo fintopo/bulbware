@@ -1,0 +1,337 @@
+﻿body {
+	font-family: 'Times New Roman','ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro','メイリオ','Meiryo','ＭＳ Ｐゴシック',sans-serif;
+	color: #000000;
+	background-color: #FFFFFF;
+	width: 900px;
+  padding-left: 50px;
+	padding-right: 50px;
+	font-size: 15pt;
+  line-height: 1;
+}
+@media print {
+  body {
+    padding-left: 80px;
+		padding-right: 80px;
+	}
+}
+
+@page {
+  margin-top: 120px;
+}
+
+a:link,
+a:visited {
+	text-decoration: underline;
+	color: #000000;
+}
+
+img {
+	border: 0;
+  width: 200px;
+  float: left;
+  margin-right: 10px;
+}
+
+p {
+  margin-bottom: 5px;
+}
+
+.underline {
+	text-decoration: underline;
+}
+
+.small {
+  font-size: 13pt;
+}
+
+.large {
+  font-size: 18pt;
+}
+
+.x-large {
+  font-size: 20pt;
+}
+
+.xx-large {
+  font-size: 22pt;
+}
+
+.vertical-middle {
+  display: table-cell;
+	vertical-align: middle;
+}
+
+.vertical-top {
+  display: table-cell;
+	vertical-align: top;
+}
+
+h1 {
+  text-align: center;
+  font-size: 18pt;
+	font-weight: bold;
+	text-decoration: underline;
+  clear: both;
+}
+
+h2 {
+  text-align: center;
+  font-size: 18pt;
+  clear: both;
+}
+
+h3 {
+  font-size: 17pt;
+	font-weight: bold;
+  clear: both;
+  margin-top: 10px;
+  margin-bottom: 5px;
+}
+
+h4 {
+  font-size: 16pt;
+	font-weight: bold;
+  clear: both;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+h5 {
+  font-size: 15pt;
+	font-weight: bold;
+  clear: both;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.indent-1 {
+  margin-left: 30px;
+  clear: both;
+}
+
+.indent-2 {
+  margin-left: 60px;
+  clear: both;
+}
+
+.indent-3 {
+  margin-left: 90px;
+  clear: both;
+}
+
+.indent-right {
+  margin-right: 30px;
+}
+
+.header:nth-child(n+2) {
+//  display: none;
+}
+
+hr {
+  border-color: black;
+  clear: both;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.total {
+  border-bottom: double black 3px; 
+}
+
+@media print {
+  .header:nth-child(n+2) {
+		display: block;
+	}
+}
+
+/* ページ番号 */
+
+body {
+	counter-reset: page; /* ページ番号のリセット */
+}
+
+.page_count {
+  text-align: right;
+	page-break-before: always;
+	counter-increment: page; /* ページ番号のインクリメント */
+//  display: none;
+}
+.page_count:first.nobreak {
+	page-break-before: avoid;
+}
+.page_count:before {
+  content: counter(page); /* ページ番号を擬似要素に表示 */
+}
+
+@media print {
+  .page_count {
+		display: block;
+	}
+}
+
+/* loading */
+
+.loading {
+  animation: spin 2s infinite linear;
+	-moz-animation: spin 2s infinite linear;
+	-webkit-animation: spin 2s infinite linear;
+	-o-animation: spin 2s infinite linear;
+	-ms-animation: spin 2s infinite linear;
+}
+
+.js_loading {
+  text-align: center;
+  font-size: 30pt;
+  padding: 10px;
+}
+
+@-webkit-keyframes spin {
+	0% {-webkit-transform: rotate(0deg);}
+	100% {-webkit-transform: rotate(360deg);}
+}
+@-moz-keyframes spin {
+	0% {-moz-transform: rotate(0deg);}
+	100% {-moz-transform: rotate(360deg);}
+}
+@-ms-keyframes spin {
+	0% {-ms-transform: rotate(0deg);}
+	100% {-ms-transform: rotate(360deg);}
+}
+@-o-keyframes spin {
+	0% {-o-transform: rotate(0deg);}
+	100% {-o-transform: rotate(360deg);}
+}
+@keyframes spin {
+	0% {transform: rotate(0deg);}
+	100% {transform: rotate(360deg);}
+}
+
+/* table */
+
+.table {
+  width: 80%;		
+  margin-left: 60px;
+  margin-bottom: 10px;
+}
+
+.table-100 {
+  width: 100%;		
+  margin-left: 0px;
+}
+
+.table-adjust .table {
+  margin-left: 30px;
+}
+
+.table>tbody>tr>td,
+.table>tbody>tr>th,
+.table>thead>tr>td,
+.table>thead>tr>th,
+.table>tfoot>tr>td,
+.table>tfoot>tr>th {
+  line-height: 1;
+}
+
+.salesorder .table {
+}
+
+.salesorder .table:not(.table-bordered) th,
+.salesorder .table:not(.table-bordered) td {
+  border: none;
+  padding: 0px;
+}
+
+.salesorder .table-bordered,
+.salesorder .table-bordered>tbody>tr>th,
+.salesorder .table-bordered>tbody>tr>td,
+.salesorder .table-bordered>thead>tr>th,
+.salesorder .table-bordered>thead>tr>td{
+  border: 1px solid black !important;
+}
+
+/* table.tbl-details */
+
+table.tbl-details {
+  margin-right: 30px;
+  width: calc(100% - 60px);
+}
+
+table.tbl-details th
+table.tbl-details td {
+  white-space: nowrap;
+}
+
+table.tbl-details tr:not(.row-options) :first-child { /* 品目 */
+  width: 15%;
+}
+table.tbl-details tr:not(.row-options) :nth-child(2) { /* 数量 */
+  width: 15%;
+  text-align: right;
+}
+table.tbl-details tr:not(.row-options) :nth-child(3) { /* 単価 */
+  width: 35%;
+  text-align: right;
+}
+table.tbl-details tr:not(.row-options) :nth-child(4) { /* 金額 */
+  width: 35%;
+  text-align: right;
+}
+
+table.tbl-details tr:not(.row-options).row-options {
+  margin-top: 10px;
+}
+
+table.tbl-details tr.row-options th,
+table.tbl-details tr.row-options td {
+ padding-top: 10px;
+}
+
+table.tbl-details tr.row-options th {
+ vertical-align: top;
+}
+
+/* table.tbl-top */
+
+table.tbl-top {
+}
+
+table.tbl-top tr td:first-child {
+  vertical-align: top;
+	white-space: nowrap;
+  padding-right: 8px;
+  width: 200px;
+}
+
+/* sales_conditions */
+
+.sales_conditions {
+  margin-top: 50px;
+}
+
+/* case-mark */
+
+.case-mark {
+  font-family: 'arial black'
+}
+
+/* サイン欄 */
+
+table.sign_area {
+  margin-top: 20px;
+}
+
+table.sign_area tr :first-child  {
+  width: 20%;
+}
+
+table.sign_area tr :nth-child(n+2)  {
+  width: 40%;
+}
+
+table.sign_area tbody tr {
+  height: 80px;
+}
+
+table.sign_area tbody tr th {
+  vertical-align: middle;
+}

@@ -32,9 +32,10 @@ class searchProjects(webapp2.RequestHandler):
 class getProject(webapp2.RequestHandler):
     def get(self, app):
         key = self.request.get('id')
+        userinfo = user_model.get_login_userinfo()
         project = bulbware_model.get_project(app, key)
         if project:
-            if project.check_edit():
+            if project.check_edit(userinfo):
                 ret = project.get_property()
                 bulbware_lib.write_json(self, ret);
 
@@ -124,9 +125,10 @@ class searchPages(webapp2.RequestHandler):
 class getPage(webapp2.RequestHandler):
     def get(self, app):
         key = self.request.get('id')
+        userinfo = user_model.get_login_userinfo()
         page = bulbware_model.get_page(app, key)
         if page:
-            if page.check_edit():
+            if page.check_edit(userinfo):
                 ret = page.get_property()
                 bulbware_lib.write_json(self, ret);
 
@@ -203,16 +205,25 @@ class appendFileToPage(webapp2.RequestHandler):
 class searchItems(webapp2.RequestHandler):
     def get(self, app):
         userinfo = user_model.get_login_userinfo()
-        project = self.request.get('project')
+        project_key = self.request.get('project')
         tags = self.request.get_all('tags[]')
         #
-        items = bulbware_model.search_items(app, userinfo, project, tags)
+        if project_key:
+            project = bulbware_model.get_project(app, project_key);
+            if project:
+                if project.check_edit(userinfo):
+                    items = bulbware_model.search_items_project(app, project, tags)
+        else:
+            items = bulbware_model.search_items_owner(app, userinfo, tags)
+        #
         ret = [];
         for item in items:
             ret.append(item.get_property())
-        # Itemがなく、create_nameが指定されている場合は、Itemを生成する
+        # プロジェクトがなく、create_nameが指定されている場合は生成する
+        create_name = self.request.get('create_name')
         if (items.count() == 0) and create_name:
-            item = bulbware_model.add_item(app, userinfo, create_name, create_options, [], create_name, project)
+            options = self.request.get('create_options')
+            item = bulbware_model.add_item(app, userinfo, create_name, options, [])
             ret.append(item.get_property())
         #
         bulbware_lib.write_json(self, ret);
@@ -220,9 +231,10 @@ class searchItems(webapp2.RequestHandler):
 class getItem(webapp2.RequestHandler):
     def get(self, app):
         key = self.request.get('id')
+        userinfo = user_model.get_login_userinfo()
         item = bulbware_model.get_item(app, key)
         if item:
-            if item.check_edit():
+            if item.check_edit(userinfo):
                 ret = item.get_property()
                 bulbware_lib.write_json(self, ret);
 
@@ -325,9 +337,10 @@ class searchAttributes(webapp2.RequestHandler):
 class getAttribute(webapp2.RequestHandler):
     def get(self, app):
         key = self.request.get('id')
+        userinfo = user_model.get_login_userinfo()
         attribute = bulbware_model.get_attribute(app, key)
         if attribute:
-            if attribute.check_edit():
+            if attribute.check_edit(userinfo):
                 ret = attribute.get_property()
                 bulbware_lib.write_json(self, ret);
 
@@ -405,23 +418,35 @@ class searchElements(webapp2.RequestHandler):
     def get(self, app):
         userinfo = user_model.get_login_userinfo()
         project_key = self.request.get('project')
-        project = bulbware_model.get_project(app, project_key);
+        tags = self.request.get_all('tags[]')
+        #
+        if project_key:
+            project = bulbware_model.get_project(app, project_key);
+            if project:
+                if project.check_edit(userinfo):
+                    elements = bulbware_model.search_elements_project(app, project, tags)
+        else:
+            elements = bulbware_model.search_elements_owner(app, userinfo, tags)
+        #
         ret = [];
-        if project:
-            tags = self.request.get_all('tags[]')
-            #
-            if project.check_edit(userinfo):
-                elements = bulbware_model.search_elements_project(app, project, tags)
-                for element in elements:
-                    ret.append(element.get_property())
+        for element in elements:
+            ret.append(element.get_property())
+        # プロジェクトがなく、create_nameが指定されている場合は生成する
+        create_name = self.request.get('create_name')
+        if (elements.count() == 0) and create_name:
+            options = self.request.get('create_options')
+            element = bulbware_model.add_element(app, userinfo, create_name, options, [])
+            ret.append(element.get_property())
+        #
         bulbware_lib.write_json(self, ret);
 
 class getElement(webapp2.RequestHandler):
     def get(self, app):
         key = self.request.get('id')
+        userinfo = user_model.get_login_userinfo()
         element = bulbware_model.get_element(app, key)
         if element:
-            if element.check_edit():
+            if element.check_edit(userinfo):
                 ret = element.get_property()
                 bulbware_lib.write_json(self, ret);
 

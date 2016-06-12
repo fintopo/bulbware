@@ -1,6 +1,6 @@
 {
   "name": "bulbware",
-  "version": "3.1.0",
+  "version": "4.0.0",
   "homepage": "https://github.com/fintopo/bulbware",
   "authors": [
     "fintopo http://www.fintopo.jp/"
@@ -19,6 +19,6 @@
   ],
   "dependencies": {
     "applyStyles": "git://github.com/fintopo/applyStyles/#~1.1.1",
-    "SNBinder": "git://github.com/snakajima/SNBinder"
+    "jquery.cabinet": "git://github.com/fintopo/jquery.cabinet#~1.6.0"
   }
 }

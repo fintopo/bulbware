@@ -1,12 +1,14 @@
 ﻿define([
   'bulbware/view'
   ,'bulbware/obj'
-  ,'text!views/profile.html'
+  ,'text!standard/views/profile.html'
 ], function(bulbwareView, bulbwareObj, templates){
   templates = SNBinder.get_named_sections_text(templates);
+  //
+  var obj_name = 'profile';
   // Profile表示用
   var viewProfile = Marionette.ItemView.extend({
-    model: bulbwareObj.Profile
+    model: bulbwareObj.LoginUser
     ,modelEvents: {
       sync: 'render'
     }
@@ -21,17 +23,20 @@
       this.logout();
     }
     ,onEditProfile: function(){
-      Backbone.history.navigate('profile', {trigger: true});
+      var _this = this;
+      //
+      _this.triggerMethod('showPanel', obj_name);
     }
   });
   bulbwareView.mixin.view(viewProfile);
   bulbwareView.mixin.template(viewProfile, templates, 'profile');
   // Profile編集用
   var panelProfile = Marionette.ItemView.extend({
-    getFragment: function(){
-      return 'profile';
-    }
-    ,model: bulbwareObj.Profile
+    objName: obj_name
+    ,flagShowNoCurrent: true
+    ,noCurrent: true
+    ,noFragment: true
+    ,model: bulbwareObj.LoginUser
     ,ui: {
       name: '.jsinput_name'
       ,email: '.jsinput_email'
@@ -82,7 +87,7 @@
   return {
     View: {
       Profile: viewProfile
-      ,panelProfile: panelProfile
+      ,panel: panelProfile
     }
   };
 });  

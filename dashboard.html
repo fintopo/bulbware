@@ -3,40 +3,58 @@
 {% block head %}
 <title>Bulbware - Application Framework</title>
 <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/base/jquery-ui.css">
-<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
-<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/themes/base/jquery-ui.css">
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.css">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pnotify/2.0.0/pnotify.core.min.css">
 <link rel="stylesheet" href="/public/main.css">
-<link rel="stylesheet" href="/js/templates/main.css">
+<link rel="stylesheet" href="/js/dashboard/css/main.css">
 <link rel="stylesheet" href="/public/skin-fintopo.css">
-<link rel="stylesheet" href="/js/templates/{{app}}.css">
+<link rel="stylesheet" href="/js/dashboard/css/{{app}}.css">
 <!-- RequireJS http://requirejs.org/ -->
 <script data-main="/js/dashboard.js" src="//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.15/require.min.js"></script>
 {% endblock %}
 
 {% block body %}
-<header class="clearfix">
-	<p class="pull-right"><a href="/">Bulbware - Application Framework</a></p>
+<header id="header">
+	<p><a href="/">Bulbware - Application Framework</a></p>
 </header>
 <div id="navigation">
 	<div class="navigation-header slidebar-resize"><p>Menu</p></div>
 	<div class="navigation-body slidebar-body">
-		<div class="js_projects"></div>
-		<div class="navigation-footer clearfix">
-   		<div class="navigation-item slidebar-close"><i class="fa fa-arrow-up"></i></div>
+		<div class="js_menu_body" style="padding: 10px;">
+			<div class="js_menu"></div>
+			<div class="js_projects"></div>
+		</div>
+		<div class="navigation-footer">
+			<div class="navigation-item-left js_version"></div>
+   		<div class="navigation-function slidebar-close"><i class="fa fa-arrow-up"></i></div>
    		<div class="js_profile navigation-item"></div>
 		</div>
 	</div>
 </div>
-<div class="container">
+<div id="modal_shield"></div>
+<div id="list"></div>		
+<div id="main-wrapper">
 	<div id="main"></div>
-	<div id="main-footer"></div>
+	<div id="main-foot"></div>
 </div>
 <div>
-  <button class="btn btn-default jsbtn_prev_panel panel-control" style="bottom: 100px;">
+	<button class="btn btn-default jsbtn_close_all_panel panel-control" data-toggle="popover" data-trigger="hover" title="" data-content="すべてのパネルを閉じる" data-placement="left" style="top: 60px;">
+		<i class="fa fa-times"></i>
+	</button>
+	<button class="btn btn-default jsbtn_prev_panel panel-control" data-toggle="popover" data-trigger="hover" title="" data-content="上のパネルに移動する" data-placement="left" style="bottom: 100px;">
 		<i class="fa fa-arrow-up"></i>
 	</button>
-  <button class="btn btn-default jsbtn_next_panel panel-control" style="bottom: 50px">
+	<button class="btn btn-default jsbtn_next_panel panel-control" data-toggle="popover" data-trigger="hover" title="" data-content="下のパネルに移動する" data-placement="left" style="bottom: 50px">
 		<i class="fa fa-arrow-down"></i>
 	</button>
+</div>
+<div id="confirm"></div>
+<div id="permalink"></div>
+<div id="js_loading" style="display: none;">
+	<div class="js_loading loading_block">
+		<i class="fa fa-spinner loading"></i>
+	</div>
 </div>
 {% endblock %}

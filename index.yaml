@@ -13,6 +13,13 @@ indexes:
 - kind: BulbwareItem
   properties:
   - name: app_name
+  - name: owner
+  - name: project
+  - name: sorttext
+
+- kind: BulbwareItem
+  properties:
+  - name: app_name
   - name: project
   - name: sorttext
 

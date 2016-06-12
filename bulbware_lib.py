@@ -7,7 +7,7 @@
 import datetime
 from google.appengine.api import users
 from google.appengine.api import images
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 import json
 import os
 from google.appengine.ext.webapp import template

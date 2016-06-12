@@ -1,6 +1,8 @@
 define([
   'bulbware/lib'
-], function(bulbwareLib){
+  ,'standard/lib'
+  ,'moment'
+], function(bulbwareLib, standardLib, moment){
   var url_base = '/api/';
   //
   var Model = Backbone.Model.extend({
@@ -68,7 +70,7 @@ define([
     ,get: function(attr) {
       var ret = _.result(this.attributes, 'attr');
       if (!ret) {
-        ret = bulbwareLib.getToDeep(this.attributes, attr);
+        ret = bulbwareLib.getDeep(this.attributes, attr);
       }
       return ret;
     }
@@ -93,6 +95,8 @@ define([
     eventAfterUpdate: function(ret){
     },
     sync: function(method, model, options) {
+      var _this = this;
+      //
       var cache_params = $.extend({
         bypass_cache:true, 
         cache_result:true
@@ -112,6 +116,10 @@ console.info(update_params);
         SNBinder.post(model.url_update, update_params, true, function(msgs) {
 console.info(msgs);
           if (msgs.object) {
+            if (!_this.reject_success) {
+              standardLib.alertSuccess('保存しました');
+            }
+            //
             var success = options.success;
             if (typeof success == 'function') {
               success(msgs.object);
@@ -321,6 +329,22 @@ console.info(msgs);
         memo: this.get('memo'),
         option_values: this.get('option_values')
       };
+    }
+    ,inGroup: function(groups){
+      var _this = this;
+      //
+/*      var option_groups = _(_this.get('UserGroup')).words(',');
+      return (_.intersection(option_groups, groups).length > 0);
+*/
+      return true;
+    }
+    ,inOptionGroup: function(groups){
+      var _this = this;
+      //
+/*      var option_groups = _(_this.get('OptionUserGroup')).words(',');
+      return (_.intersection(option_groups, groups).length > 0);
+*/
+      return true;
     }
   });
   // Project
@@ -547,14 +571,16 @@ console.info(msgs);
   //
   return {
     Collection: {
-       Projects: Projects
+      Base: Collection
+      ,Projects: Projects
       ,Pages: Pages
       ,Items: Items
       ,Attributes: Attributes
       ,Elements: Elements
     }
     ,Model: {
-      Profile: Profile
+      Base: Model
+      ,Profile: Profile
       ,Project: Project
       ,Page: Page
       ,Item: Item
