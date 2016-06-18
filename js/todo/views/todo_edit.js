@@ -51,6 +51,8 @@ define([
       if (_this.model.isNew()) {
         _this.$('.jsbtn_delete').hide();
         _this.$('.jsbtn_to_view').hide();
+      } else if (_this.model.tasks.length) {
+        _this.$('.jsbtn_delete').hide();
       }
     }
   });

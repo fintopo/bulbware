@@ -48,14 +48,12 @@ define([
         modeAddCollection: true
       });
     }
-    ,onDelete: function(){
-      return !window.confirm('削除します');
-    }
     ,onAfterDelete: function(){
-      this.closePanel();
+      this.triggerMethod('closePanel');
     }
   });
-  bulbwareView.mixin.view(viewBody);
+  bulbwareView.mixin.edit(viewBody);
+  bulbwareView.mixin.onDeleteDetail(viewBody);
   bulbwareView.mixin.template(viewBody, templates, 'body');
   //
   var collection = new models.Collection.Projects();

@@ -23,6 +23,12 @@ indexes:
   - name: project
   - name: sorttext
 
+- kind: BulbwarePage
+  properties:
+  - name: app_name
+  - name: project
+  - name: sorttext
+
 - kind: BulbwareProject
   properties:
   - name: app_name
