@@ -129,6 +129,8 @@ console.info(msgs);
         break;
       case 'delete':
         SNBinder.post(model.url_delete, {id: model.id}, false, function(){
+          standardLib.alertSuccess('保存しました');
+          //
           var success = options.success;
           if (typeof success == 'function') {
             success([]);
@@ -206,6 +208,25 @@ console.info(msgs);
         data: formData,
         dataType: 'json'
       }, options));
+    }
+    ,removeCollection: function(){
+      // this.collectionから自身を削除する。
+      // destroy の代わり
+      // destroyだとAPIを呼び出すため。
+      if (this.collection) {
+        this.collection.remove(this);
+      }
+    }
+    ,copyModel: function(){
+      // 内容を保持した新しいモデルを生成する
+      var new_model = this.clone();
+      new_model.set('id', null);
+      return new_model;
+    }
+    ,setCallbackSyncOnce: function(callback){
+      var _this = this;
+      //
+      _this.listenToOnce(_this, 'sync', callback);
     }
   });
   var Collection = Backbone.Collection.extend({
@@ -308,6 +329,11 @@ console.info(msgs);
       }
       //
       return model;
+    }
+    ,setCallbackSyncOnce: function(callback){
+      var _this = this;
+      //
+      _this.listenToOnce(_this, 'sync', callback);
     }
   });
   // Profile

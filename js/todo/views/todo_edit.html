@@ -12,7 +12,7 @@ $(.name)
 
 {%}header{%}
 <h4>
-	<button class="btn btn-default jsbtn_to_edit"><i class="fa fa-edit"></i>編集</button>
+	$(_Text.buttonToEdit)
 	$(.name)
 </h4>
 <div class="memo">
@@ -28,10 +28,10 @@ $(.name)
 	<label>詳細</label>
 	<textarea class="form-control jsinput_memo">$(_option_values.memo)</textarea>
 </div>
-<div class="form-group">
-	<button class="btn btn-primary jsbtn_save_to_view">保存</button>
-	<button class="btn btn-default jsbtn_to_view">キャンセル</button>
-	<button class="btn btn-danger jsbtn_delete">削除</button>
+<div class="form-group clearfix">
+	$(_Text.buttonSaveToView)
+	$(_Text.buttonToView)
+	$(_Text.buttonDelete)
 </div>
 
 {%}details_tagName{%}
@@ -43,10 +43,10 @@ $(.name)
 <button class="btn btn-default btn-block jsbtn_add_detail"><i class="fa fa-plus"></i> アイテム追加</button>
 
 {%}detail_tagName{%}
-{%}detail_className{%}media clearfix
+{%}detail_className{%}
 {%}detail{%}
-<button class="btn btn-default pull-right jsbtn_to_edit"><i class="fa fa-edit"></i> 編集</button>
-<h4 class="jsbtn_slide_toggle text-overflow">
+<h4>
+	$(_Text.buttonToEdit)
 	$(.name)
 </h4>
 
@@ -59,8 +59,8 @@ $(.name)
 	<label>詳細</label>
 	<textarea class="form-control jsinput_memo">$(_option_values.memo)</textarea>
 </div>
-<div class="form-group">
-	<button class="btn btn-primary jsbtn_save_to_view">保存</button>
-	<button class="btn btn-default jsbtn_to_view">キャンセル</button>
-	<button class="btn btn-danger jsbtn_delete_detail">削除</button>
+<div class="form-group clearfix">
+	$(_Text.buttonSaveToView)
+	$(_Text.buttonToView)
+	$(_Text.buttonDeleteDetail)
 </div>

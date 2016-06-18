@@ -63,7 +63,7 @@ define([
   //
   var viewDetail = Marionette.ItemView.extend({
     modelEvents: {
-      sync: 'render'
+      sync: 'toView'
     }
     ,ui: {
       first: '.jsinput_name'
@@ -86,7 +86,8 @@ define([
       return true;
     }
   });
-  bulbwareView.mixin.toggleEdit(viewDetail);
+  bulbwareView.mixin.toggleEdit(viewDetail, 'destroy');
+  bulbwareView.mixin.onDeleteDetail(viewDetail);
   bulbwareView.mixin.template(viewDetail, templates, 'detail');
   //
   var viewDetails = Marionette.CompositeView.extend({
