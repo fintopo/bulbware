@@ -71,9 +71,10 @@
       });
       _this.profile.show(_this.view_profile);
       //
-      _this.view_projects = new viewsTodo.viewMenu();
-      _this.listenTo(_this.view_projects, 'callOrder', function(obj, id){
-        _this.triggerMethod('callOrder', obj, id);
+      _this.view_projects = new viewsTodo.View.list();
+      _this.listenTo(_this.view_projects, 'selectItem', function(model, view){
+//      _this.listenTo(_this.view_projects, 'callOrder', function(obj, id){
+        _this.triggerMethod('callOrder', viewsTodo.name, model.id);
       });
       _this.listenTo(viewsTodo.collection, 'add', function(){
         _this.resize();

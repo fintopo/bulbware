@@ -1,0 +1,66 @@
+{%}title_tagName{%}h3
+{%}title_className{%}panel-title
+{%}title{%}
+$(.name)
+
+{%}header_tagName{%}
+{%}header_className{%}
+{%}header_css{%}
+.memo {
+  padding: 10px 30px;
+}
+
+{%}header{%}
+<h4>
+	<button class="btn btn-default jsbtn_to_edit"><i class="fa fa-edit"></i>編集</button>
+	$(.name)
+</h4>
+<div class="memo">
+	$(.option_values.memo)
+</div>
+
+{%}header_editing{%}
+<div class="form-group">
+	<label>プロジェクト名</label>
+	<input type="text" class="form-control jsinput_name" value="$(.name)" />
+</div>
+<div class="form-group">
+	<label>詳細</label>
+	<textarea class="form-control jsinput_memo">$(_option_values.memo)</textarea>
+</div>
+<div class="form-group">
+	<button class="btn btn-primary jsbtn_save_to_view">保存</button>
+	<button class="btn btn-default jsbtn_to_view">キャンセル</button>
+	<button class="btn btn-danger jsbtn_delete">削除</button>
+</div>
+
+{%}details_tagName{%}
+{%}details_className{%}
+{%}details_container{%}.js_details
+{%}details{%}
+<div class="js_details"></div>
+<br>
+<button class="btn btn-default btn-block jsbtn_add_detail"><i class="fa fa-plus"></i> アイテム追加</button>
+
+{%}detail_tagName{%}
+{%}detail_className{%}media clearfix
+{%}detail{%}
+<button class="btn btn-default pull-right jsbtn_to_edit"><i class="fa fa-edit"></i> 編集</button>
+<h4 class="jsbtn_slide_toggle text-overflow">
+	$(.name)
+</h4>
+
+{%}detail_editing{%}
+<div class="form-group">
+	<label>ToDo</label>
+	<input type="text" class="form-control jsinput_name" value="$(.name)" />
+</div>
+<div class="form-group">
+	<label>詳細</label>
+	<textarea class="form-control jsinput_memo">$(_option_values.memo)</textarea>
+</div>
+<div class="form-group">
+	<button class="btn btn-primary jsbtn_save_to_view">保存</button>
+	<button class="btn btn-default jsbtn_to_view">キャンセル</button>
+	<button class="btn btn-danger jsbtn_delete_detail">削除</button>
+</div>

@@ -36,33 +36,37 @@ define([
       var views = _this.options.views;
       //
       // 条件Viewの設定
-      _this.conditions.show(views.conditions);
-      _this.listenTo(views.conditions, 'search', function(model){
-        _this.conditions.$el.slidebar('close');
-        standardFunc.resetListBodyHeight();
-      });
-      _this.listenTo(views.conditions, 'after:search', function(model){
-        _this.time = moment().valueOf(); // 時刻を保存する。
-        _this.triggerMethod('clickClearSearchText');
-      });
-      _this.conditions.$el.slidebar({
-			  position: 'top'
-        ,open: !views.conditions.initAutoSelect
-        ,onOpen: function(){
-          _this.ui.area_extract.hide();
-        }
-        ,onClose: function(){
-          if (!views.list.isEmpty()) {
-            _this.ui.area_extract.show();
+      if (views.conditions) {
+        _this.conditions.show(views.conditions);
+        _this.listenTo(views.conditions, 'search', function(model){
+          _this.conditions.$el.slidebar('close');
+          standardFunc.resetListBodyHeight();
+        });
+        _this.listenTo(views.conditions, 'after:search', function(model){
+          _this.time = moment().valueOf(); // 時刻を保存する。
+          _this.triggerMethod('clickClearSearchText');
+        });
+        _this.conditions.$el.slidebar({
+			    position: 'top'
+          ,open: !views.conditions.initAutoSelect
+          ,onOpen: function(){
+            _this.ui.area_extract.hide();
           }
-        }
-		  });
+          ,onClose: function(){
+            if (!views.list.isEmpty()) {
+              _this.ui.area_extract.show();
+            }
+          }
+		    });
+      }
       // リストViewの設定
-      _this.list_body.show(views.list);
-      _this.listenTo(views.list.collection, 'sync', function(){
-        var method = (views.list.isEmpty()) ? 'hide' : 'show';
-        _this.ui.area_extract[method]();
-      });
+      if (views.list) {
+        _this.list_body.show(views.list);
+        _this.listenTo(views.list.collection, 'sync', function(){
+          var method = (views.list.isEmpty()) ? 'hide' : 'show';
+          _this.ui.area_extract[method]();
+        });
+      }
       // 新規登録ボタン
       (function(){
         var method = (_(views.list).result('disabledAddNewView') && !_.isFunction(views.list.onAddNewView)) ? 'hide' : 'show';

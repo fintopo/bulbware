@@ -317,6 +317,7 @@ console.info(msgs);
     url_delete: '',
     url_upload: '/user/api/append_icon',
     defaults: {
+      id: null,
       name: '',
       email: '',
       memo: '',
@@ -354,7 +355,8 @@ console.info(msgs);
     api_update: '/update_project',
     api_delete: '/delete_project',
     defaults: {
-      name: ''
+      id: null
+      ,name: ''
       ,options: {}
       ,tags: []
       ,sorttext: ''
@@ -392,7 +394,8 @@ console.info(msgs);
     api_update: '/update_page',
     api_delete: '/delete_page',
     defaults: {
-      name: ''
+      id: null
+      ,name: ''
       ,options: {}
       ,tags: []
       ,sorttext: ''
@@ -436,7 +439,8 @@ console.info(msgs);
     api_delete: '/delete_item',
     api_upload: '/append_file_to_item',
     defaults: {
-      name: ''
+      id: null
+      ,name: ''
       ,options: {}
       ,tags: []
       ,sorttext: ''
@@ -479,7 +483,8 @@ console.info(msgs);
     api_update: '/update_attribute',
     api_delete: '/delete_attribute',
     defaults: {
-      name: ''
+      id: null
+      ,name: ''
       ,options: {}
       ,tags: []
       ,sorttext: ''
@@ -522,7 +527,8 @@ console.info(msgs);
     api_update: '/update_element',
     api_delete: '/delete_element',
     defaults: {
-      options: {}
+      id: null
+      ,options: {}
       ,tags: []
       ,sorttext: ''
       ,project_id: ''

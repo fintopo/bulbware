@@ -346,8 +346,16 @@ console.log(this.model, this.model.isNew());
         this.render();
       }
       ,toView: function(){
-        this.setIsEdit(false);
-        this.render();
+        var _this = this;
+        //
+        if (_this.is_edit && !_this.is_save && _this.model.isNew()) {
+          // 新規登録でキャンセルした時には削除する。
+          _this.model.destroy();
+        } else {
+          _this.setIsEdit(false);
+          _this.render();
+        }
+        _this.is_save = false;
       }
       ,onRender: function(){
         if (!this._isShown) return;
@@ -359,6 +367,10 @@ console.log(this.model, this.model.isNew());
       ,_saveToView: function(){
         if (!this.is_edit) return;
         if (this.model.validationError) return;
+        //
+        this.is_new = this.model.isNew();
+        this.is_save = true;
+        //
         if (!_(this).result('saveToView')) {
           this.toView();
         }
@@ -816,6 +828,12 @@ console.log(_this.extractResults);
         var view = _this.getView(model);
         this.triggerMethod('selectItem', model, view, flag_copy, tab);
         model.trigger('active');
+      }
+      ,events: {
+        'click .jsbtn_add': 'clickAdd'
+      }
+      ,clickAdd: function(){
+        this.addNewView(null);
       }
       ,childEvents: {
         'selectItem': 'onChildSelectItem'

@@ -1,0 +1,31 @@
+{%}conditions_tagName{%}
+{%}conditions_className{%}row
+{%}conditions{%}
+<div class="col-xs-12">
+	<div class="form-group">
+		<label class="control-label">プロジェクト名</label>
+		<input type="text" class="jsinput_name form-control" value="">
+	</div>
+</div>
+<div class="col-xs-12">
+	<div class="form-group">
+		<button class="btn btn-lg btn-block btn-primary jsbtn_search"><i class="$(_Text.icon_search)"></i> Search</button>
+	</div>
+</div>
+
+{%}list_tagName{%}
+{%}list_className{%}
+{%}list_container{%}.js_list
+{%}list{%}
+<ul class="nav nav-pills js_list"></ul>
+<button class="btn btn-default jsbtn_add"><i class="fa fa-plus"></i> プロジェクト登録</button>
+
+{%}item_tagName{%}li
+{%}item_className{%}
+{%}item{%}
+<a>$(.name)</a>
+
+{%}empty_tagName{%}li
+{%}empty_className{%}
+{%}empty{%}
+
